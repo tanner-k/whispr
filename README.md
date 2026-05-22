@@ -14,8 +14,10 @@ npm --prefix frontend install && uv sync
 ```
 
 ## Develop
+Run the backend and frontend in two terminals:
 ```bash
-npm --prefix frontend run dev (+ uv run python -m whispr)
+uv run python -m whispr          # FastAPI backend on :8000
+npm --prefix frontend run dev    # Vite dev server on :5173
 ```
 
 ## Test
