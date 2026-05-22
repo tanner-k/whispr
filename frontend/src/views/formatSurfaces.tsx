@@ -276,7 +276,7 @@ export interface FormattedOutputProps {
 
 /** Renders the formatted output for the selected format. */
 export function FormattedOutput({ sample, selected }: FormattedOutputProps) {
-  const fmt = selected || sample.format;
+  const fmt = selected;
   const keys = Object.keys(sample.formatted) as Format[];
   const content = sample.formatted[fmt] || sample.formatted[keys[0]];
   const mono = fmt === 'markdown' || fmt === 'list' || fmt === 'check' || fmt === 'steps';

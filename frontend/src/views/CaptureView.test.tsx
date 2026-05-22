@@ -152,3 +152,55 @@ describe('CaptureView — format-view Segmented', () => {
     expect(dispatch).toHaveBeenCalledWith({ type: 'format:pick', f: 'list' });
   });
 });
+
+describe('CaptureView — recording', () => {
+  it('renders the recording status and elapsed time', () => {
+    render(
+      <CaptureView
+        state={makeState({ phase: 'recording', elapsed: 42 })}
+        dispatch={vi.fn()}
+        prefs={prefs}
+      />,
+    );
+    expect(screen.getByText('Recording')).toBeInTheDocument();
+    expect(screen.getByText('0:42')).toBeInTheDocument();
+  });
+
+  it('dispatches rec:stop when the mic is clicked while recording', async () => {
+    const dispatch = vi.fn();
+    render(
+      <CaptureView state={makeState({ phase: 'recording' })} dispatch={dispatch} prefs={prefs} />,
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Stop recording' }));
+    expect(dispatch).toHaveBeenCalledWith({ type: 'rec:stop' });
+  });
+
+  it('dispatches rec:cancel when "Cancel" is clicked', async () => {
+    const dispatch = vi.fn();
+    render(
+      <CaptureView state={makeState({ phase: 'recording' })} dispatch={dispatch} prefs={prefs} />,
+    );
+    await userEvent.click(screen.getByRole('button', { name: /Cancel/ }));
+    expect(dispatch).toHaveBeenCalledWith({ type: 'rec:cancel' });
+  });
+});
+
+describe('CaptureView — transcribing', () => {
+  it('renders the transcribing status', () => {
+    render(
+      <CaptureView
+        state={makeState({ phase: 'transcribing', elapsed: 6 })}
+        dispatch={vi.fn()}
+        prefs={prefs}
+      />,
+    );
+    expect(screen.getByText('Transcribing')).toBeInTheDocument();
+  });
+
+  it('disables the mic button while transcribing', () => {
+    render(
+      <CaptureView state={makeState({ phase: 'transcribing' })} dispatch={vi.fn()} prefs={prefs} />,
+    );
+    expect(screen.getByRole('button', { name: 'Start recording' })).toBeDisabled();
+  });
+});

@@ -22,6 +22,10 @@ export type CapturePhase = 'idle' | 'recording' | 'transcribing' | 'ready';
  * currently shows. */
 export type FormatView = 'inline' | 'split' | 'confidence';
 
+/* ─── NavTarget ───────────────────────────────────────────────────
+ * The five top-level views reachable from the nav rail. */
+export type NavTarget = 'capture' | 'history' | 'bench' | 'vocab' | 'settings';
+
 /* ─── CaptureState ────────────────────────────────────────────────
  * The full reducer state. Mirrors `initialCapture` in studio-app.jsx. */
 export interface CaptureState {
@@ -72,7 +76,7 @@ export type CaptureAction =
   /** Commit the current sample (paste & save) — resets state. */
   | { type: 'commit' }
   /** App-level navigation to another view. */
-  | { type: 'nav:go'; v: string };
+  | { type: 'nav:go'; v: NavTarget };
 
 /* ─── Dispatch ────────────────────────────────────────────────────
  * The dispatch function passed down to the views. */

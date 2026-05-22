@@ -100,3 +100,15 @@ describe('HistoryView — starred filter', () => {
     expect(screen.queryByText('Parser idea')).not.toBeInTheDocument();
   });
 });
+
+describe('HistoryView — today filter', () => {
+  it('shows only Today-prefixed rows when the Today filter is active', async () => {
+    render(<HistoryView state={state} dispatch={vi.fn()} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Today' }));
+    // Today: Grocery run, Standup — May 21, Parser idea.
+    expect(screen.getByText('Parser idea')).toBeInTheDocument();
+    // Not today: Reading list (Mon May 19), Trip checklist (Sun May 18).
+    expect(screen.queryByText('Reading list')).not.toBeInTheDocument();
+    expect(screen.queryByText('Trip checklist')).not.toBeInTheDocument();
+  });
+});

@@ -20,6 +20,7 @@ export interface HistoryDetailProps {
 /** The detail pane for a single history entry. */
 export function HistoryDetail({ item }: HistoryDetailProps) {
   // Use a matching demo sample if one exists, else fabricate.
+  // T8: fragile title-string coupling — replace with an id-based backend lookup.
   const sample = DEMO_SAMPLES.find((s) => s.title === item.title) || null;
   return (
     <div className="fade-in">
