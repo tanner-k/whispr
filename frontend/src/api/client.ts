@@ -60,7 +60,11 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     throw new ApiError(envelope.error ?? `Request to ${path} failed`, response.status);
   }
 
-  return envelope.data as T;
+  if (envelope.data === null || envelope.data === undefined) {
+    throw new ApiError(`Empty data in successful response from ${path}`, response.status);
+  }
+
+  return envelope.data;
 }
 
 /** GET `/api{path}`, returning the unwrapped payload. */

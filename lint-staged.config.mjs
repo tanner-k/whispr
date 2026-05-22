@@ -14,7 +14,7 @@ export default {
   'frontend/**/*.{json,css,md,yml,yaml,html}': (files) => [
     `node_modules/.bin/prettier --write ${quote(files)}`,
   ],
-  '*.py': (files) => [
+  '**/*.py': (files) => [
     `uv run ruff check --fix ${quote(files)}`,
     `uv run ruff format ${quote(files)}`,
   ],

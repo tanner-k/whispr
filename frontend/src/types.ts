@@ -2,7 +2,7 @@
  * types.ts — TypeScript data shapes for Whispr Studio.
  *
  * Derived from the mock-data objects in the design prototype
- * (design-reference/voice-chat-app/project/*.jsx). Components and
+ * (design-reference/project/*.jsx). Components and
  * views ported in T3–T5 consume these types; the backend (T6+)
  * returns them wrapped in {@link ApiEnvelope}.
  */
@@ -183,8 +183,8 @@ export interface Settings {
   privacy: {
     /** Retain raw .wav files alongside transcripts. */
     keepRawAudio: boolean;
-    /** Audio retention window, e.g. '30d' | '7d' | '1d' | 'never'. */
-    audioRetention: string;
+    /** Audio retention window. */
+    audioRetention: '30d' | '7d' | '1d' | 'never';
     /** Send anonymous stack-trace-only error reports. */
     anonymousErrorReports: boolean;
     /** Allow tools that require the internet. */

@@ -1,6 +1,6 @@
 /* index.css — theme foundation for Whispr Studio.
  * Ported verbatim from the <style> block of
- * design-reference/voice-chat-app/project/whispr-studio.html.
+ * design-reference/project/whispr-studio.html.
  * Every later component depends on these CSS variables / keyframes. */
 
 :root {
