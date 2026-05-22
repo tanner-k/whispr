@@ -64,6 +64,7 @@ export function Segmented<V extends string = string>({
         return (
           <button
             key={opt.value}
+            type="button"
             onClick={() => onChange(opt.value)}
             style={{
               padding: size === 'sm' ? '3px 8px' : '5px 12px',
@@ -117,6 +118,7 @@ export interface SwitchProps {
 export function Switch({ on, onChange }: SwitchProps) {
   return (
     <button
+      type="button"
       onClick={() => onChange(!on)}
       style={{
         width: 34,

@@ -140,9 +140,19 @@ export function Btn({
       borderColor: 'var(--border-hi)',
       color: 'var(--text)',
     });
+  // Resting border color for non-primary/ghost variants, restored on mouse-leave.
+  const restingBorder = active
+    ? 'var(--border-hi)'
+    : variant === 'danger'
+      ? 'var(--danger-dim)'
+      : variant === 'subtle'
+        ? 'transparent'
+        : 'var(--border)';
   return (
     <button
+      type="button"
       title={title}
+      disabled={disabled}
       onClick={disabled ? undefined : onClick}
       style={base}
       onMouseEnter={(e) => {
@@ -155,7 +165,7 @@ export function Btn({
       onMouseLeave={(e) => {
         if (variant === 'primary') e.currentTarget.style.background = 'var(--accent)';
         else if (variant === 'ghost') e.currentTarget.style.background = 'transparent';
-        else e.currentTarget.style.borderColor = active ? 'var(--border-hi)' : 'var(--border)';
+        else e.currentTarget.style.borderColor = restingBorder;
       }}
     >
       {icon}
