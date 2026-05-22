@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [dev, main]
+  push:
+    branches: [dev, main]
+
+jobs:
+  check:
+    name: Lint · Typecheck · Test · Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install
+        run: npm --prefix frontend install
+
+      - name: Lint
+        run: npm --prefix frontend run lint
+
+      - name: Typecheck
+        run: npm --prefix frontend run typecheck
+        continue-on-error: true # remove once typecheck script exists
+
+      - name: Test
+        run: npm --prefix frontend test
+
+      - name: Build
+        run: npm --prefix frontend run build
+
+  python-check:
+    name: Python · Ruff · Mypy · Pytest
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Install
+        run: uv sync
+
+      - name: Lint
+        run: uv run ruff check .
+
+      - name: Typecheck
+        run: uv run mypy backend
+
+      - name: Test
+        run: uv run pytest
+
+  docs-sync:
+    name: CLAUDE.md == AGENTS.md
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify CLAUDE.md and AGENTS.md are identical
+        run: |
+          if ! diff -q CLAUDE.md AGENTS.md; then
+            echo "::error::CLAUDE.md and AGENTS.md must be identical."
+            exit 1
+          fi

@@ -1,0 +1,1591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1280" />
+<title>Whispr — Scoping Wireframes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Kalam:wght@400;700&family=Caveat:wght@500;700&family=Architects+Daughter&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#f6f1e4;
+    --paper-2:#efe7d2;
+    --ink:#1a1814;
+    --ink-soft:#3a352c;
+    --rule:#c8bda0;
+    --accent:#ffcf3a;       /* highlighter yellow */
+    --accent-2:#ff6b35;     /* orange marker */
+    --accent-3:#4a80f0;     /* blue pen */
+    --accent-4:#3aaa6a;     /* green pen */
+    --accent-5:#d23b6b;     /* red pen */
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--paper);color:var(--ink);font-family:'Patrick Hand',ui-sans-serif,system-ui,sans-serif;font-size:17px;line-height:1.45}
+
+  /* paper texture (subtle dots + faint rule lines) */
+  body{
+    background-image:
+      radial-gradient(rgba(0,0,0,.045) 1px, transparent 1px),
+      linear-gradient(to bottom, transparent 0, transparent 31px, rgba(74,128,240,.07) 32px);
+    background-size: 6px 6px, 100% 32px;
+  }
+
+  /* Headings */
+  h1,h2,h3,h4{font-family:'Kalam',cursive;font-weight:700;margin:0;letter-spacing:.2px}
+  h1{font-size:42px;line-height:1.05}
+  h2{font-size:30px}
+  h3{font-size:22px}
+  h4{font-size:18px}
+  .caveat{font-family:'Caveat',cursive}
+  .mono{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:13px}
+
+  /* Layout */
+  header.top{
+    padding:36px 56px 12px;
+    border-bottom:2px solid var(--ink);
+    background:var(--paper);
+    position:relative;
+  }
+  header.top::after{
+    /* second sketchy line under border */
+    content:""; position:absolute; left:56px; right:56px; bottom:-7px;
+    border-top:1.5px solid var(--ink); opacity:.5;
+    transform: translateY(2px) rotate(-.15deg);
+  }
+  .brand{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap}
+  .brand .logo{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:54px;height:54px;border:2.5px solid var(--ink);
+    border-radius: 18px 22px 16px 24px / 22px 16px 24px 18px;
+    background: var(--accent); box-shadow: 4px 4px 0 var(--ink);
+    transform: rotate(-3deg);
+    font-family:'Kalam',cursive; font-weight:700; font-size:28px;
+  }
+  .lede{max-width:900px;color:var(--ink-soft);margin:10px 0 0;font-size:18px}
+  .stamp{
+    display:inline-block;border:2px solid var(--accent-5);color:var(--accent-5);
+    font-family:'Kalam',cursive;font-weight:700;padding:2px 10px;
+    transform:rotate(-4deg); border-radius: 4px 8px 6px 10px;
+    font-size:14px; letter-spacing:1px; text-transform:uppercase;
+    margin-left:auto;
+  }
+  .meta{
+    display:flex; gap:24px; margin-top:14px; color:var(--ink-soft); font-size:15px;
+  }
+  .meta span b{font-family:'Kalam',cursive;color:var(--ink)}
+
+  /* Tabs */
+  nav.tabs{
+    display:flex; gap:0; margin-top:22px; flex-wrap:wrap;
+    border-bottom:2px solid var(--ink); padding-bottom:0; margin-bottom:-2px;
+  }
+  nav.tabs button{
+    font-family:'Kalam',cursive; font-weight:700; font-size:18px;
+    background:transparent; border:2px solid var(--ink); border-bottom:none;
+    color:var(--ink); padding:8px 16px 10px; cursor:pointer;
+    margin-right:-2px; margin-bottom:0;
+    border-radius: 12px 14px 0 0 / 14px 12px 0 0;
+    position:relative; top:2px;
+    transform: rotate(-.4deg);
+  }
+  nav.tabs button:nth-child(2){transform:rotate(.3deg)}
+  nav.tabs button:nth-child(3){transform:rotate(-.2deg)}
+  nav.tabs button:nth-child(4){transform:rotate(.4deg)}
+  nav.tabs button:nth-child(5){transform:rotate(-.3deg)}
+  nav.tabs button:nth-child(6){transform:rotate(.2deg)}
+  nav.tabs button:nth-child(7){transform:rotate(-.1deg)}
+  nav.tabs button[aria-selected="true"]{
+    background:var(--paper); color:var(--ink);
+    box-shadow: inset 0 -6px 0 var(--accent);
+  }
+  nav.tabs button:hover{background:rgba(0,0,0,.04)}
+  nav.tabs .count{
+    font-family:'Patrick Hand'; font-size:13px; color:var(--ink-soft); margin-left:6px;
+  }
+
+  main{padding:36px 56px 80px}
+
+  section[data-tab]{display:none}
+  section[data-tab].active{display:block}
+
+  /* Headings inside */
+  .section-head{display:flex;align-items:baseline;justify-content:space-between;gap:20px;margin-bottom:6px;flex-wrap:wrap}
+  .section-head h2{position:relative}
+  .section-head h2::after{
+    content:""; position:absolute; left:-4px; right:-4px; bottom:-6px; height:14px;
+    background: var(--accent); z-index:-1; opacity:.55;
+    border-radius: 8px 12px 6px 10px;
+    transform: rotate(-.6deg);
+  }
+  .section-head .kicker{
+    font-family:'Caveat',cursive; font-size:22px; color:var(--ink-soft);
+  }
+  .section-intro{max-width:900px; color:var(--ink-soft); margin:14px 0 26px; font-size:17px}
+
+  /* Sketchy card */
+  .card{
+    background: var(--paper);
+    border:2.5px solid var(--ink);
+    border-radius: 14px 18px 12px 20px / 18px 12px 20px 14px;
+    box-shadow: 5px 5px 0 var(--ink);
+    padding:18px 18px 16px;
+    position:relative;
+  }
+  .card.tilt-l{transform:rotate(-.4deg)}
+  .card.tilt-r{transform:rotate(.4deg)}
+
+  .card h3{display:flex; align-items:center; gap:10px; margin-bottom:4px}
+  .card h3 .num{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:30px; height:30px; border:2px solid var(--ink);
+    border-radius: 50%; background: var(--paper-2);
+    font-family:'Kalam',cursive; font-size:16px;
+    box-shadow: 2px 2px 0 var(--ink);
+  }
+  .card .sub{color:var(--ink-soft); font-size:15px; margin-bottom:14px}
+  .card .pros, .card .cons{margin-top:8px}
+  .card .pros::before, .card .cons::before{
+    font-family:'Kalam',cursive; font-weight:700; margin-right:6px;
+  }
+  .card .pros::before{content:"+"; color:var(--accent-4)}
+  .card .cons::before{content:"−"; color:var(--accent-5)}
+
+  /* Grids */
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+  .grid-4{display:grid;grid-template-columns:repeat(2,1fr);gap:24px}
+  @media (min-width:1400px){ .grid-4{grid-template-columns:repeat(4,1fr)} }
+
+  /* Wireframe canvas inside card */
+  .wf{
+    background: var(--paper-2);
+    border:2px solid var(--ink);
+    border-radius: 10px 14px 8px 12px;
+    padding:14px;
+    margin: 6px 0 12px;
+    position:relative;
+    min-height:220px;
+    overflow:hidden;
+  }
+  .wf.tall{min-height:300px}
+  .wf.short{min-height:170px}
+  .wf-label{
+    position:absolute; top:-12px; right:14px;
+    background:var(--paper); padding:0 8px;
+    font-family:'Caveat',cursive; font-size:18px; color:var(--ink-soft);
+    border:1.5px solid var(--ink); border-radius:8px;
+    transform:rotate(2deg);
+  }
+
+  /* Generic boxy elements inside wireframes */
+  .box{
+    border:2px solid var(--ink); background:var(--paper);
+    border-radius: 8px 10px 6px 12px;
+    padding:8px 10px; font-size:14px;
+  }
+  .box.dim{background:transparent; color:var(--ink-soft); border-style:dashed}
+  .box.shadow{box-shadow:3px 3px 0 var(--ink)}
+  .box.hl{background:var(--accent)}
+  .box.hl2{background: #ffe0a8}
+  .box.warn{background:#ffd6c2}
+  .box.ok{background:#cfeede}
+  .row{display:flex; gap:8px; align-items:center}
+  .col{display:flex; flex-direction:column; gap:8px}
+  .stack-sm{display:flex; flex-direction:column; gap:6px}
+  .stack{display:flex; flex-direction:column; gap:10px}
+  .pill{
+    border:2px solid var(--ink); border-radius:999px; padding:3px 12px;
+    background:var(--paper); font-size:13px; font-family:'Patrick Hand';
+  }
+  .pill.k{background:var(--accent)}
+  .pill.b{background:#cfdcff}
+  .pill.g{background:#cfeede}
+  .pill.r{background:#ffd6c2}
+  .pill.dot::before{content:"●"; margin-right:6px; color:var(--accent-5)}
+  .chip{
+    display:inline-flex; gap:6px; align-items:center;
+    border:2px dashed var(--ink); padding:2px 8px; border-radius:6px;
+    background:var(--paper); font-size:13px;
+  }
+  .arr{font-family:'Caveat',cursive; font-size:24px; color:var(--ink); line-height:1}
+  .arr.down{display:inline-block; transform:rotate(90deg)}
+  .label{font-family:'Caveat',cursive; font-size:18px; color:var(--ink-soft)}
+  .scribble{font-family:'Caveat',cursive; color:var(--ink-soft); font-size:16px}
+  .underline-acc{
+    background-image: linear-gradient(transparent 70%, var(--accent) 70%);
+    padding: 0 2px;
+  }
+  .marker{
+    background: var(--accent); padding: 0 4px;
+    box-decoration-break: clone;
+  }
+  .marker.o{background:#ffd6a3}
+  .marker.b{background:#cfdcff}
+  .marker.g{background:#cfeede}
+
+  /* SVG hand-drawn flourish helpers */
+  svg.scratch{display:block}
+
+  /* Decision matrix */
+  table.decisions{
+    width:100%; border-collapse:separate; border-spacing:0;
+    font-size:16px;
+  }
+  table.decisions th, table.decisions td{
+    border-bottom:1.5px dashed var(--ink);
+    padding:10px 12px; text-align:left; vertical-align:top;
+  }
+  table.decisions th{
+    font-family:'Kalam',cursive; font-weight:700;
+    border-bottom:2.5px solid var(--ink);
+  }
+  table.decisions tr:last-child td{border-bottom:none}
+  .pick{
+    background:var(--accent); border:2px solid var(--ink);
+    padding:1px 8px; border-radius:6px; font-family:'Kalam'; font-weight:700;
+    transform:rotate(-1deg); display:inline-block;
+  }
+
+  /* Phone / window frames for wireframes */
+  .menubar-pop{
+    width:280px; min-height:280px; border:2.5px solid var(--ink);
+    background: var(--paper); border-radius: 12px 14px 12px 14px;
+    box-shadow: 4px 4px 0 var(--ink);
+    position:relative;
+  }
+  .menubar-pop::before{
+    /* triangle pointer to menubar */
+    content:""; position:absolute; top:-10px; left:32px;
+    width:14px; height:14px; background: var(--paper);
+    border-left:2.5px solid var(--ink); border-top:2.5px solid var(--ink);
+    transform:rotate(45deg);
+  }
+  .window-frame{
+    border:2.5px solid var(--ink); background:var(--paper);
+    border-radius: 10px 12px 10px 12px;
+    box-shadow: 5px 5px 0 var(--ink);
+    overflow:hidden;
+  }
+  .window-frame .titlebar{
+    display:flex; align-items:center; gap:6px;
+    padding:6px 10px; border-bottom:2px solid var(--ink);
+    background:var(--paper-2);
+  }
+  .titlebar .dot{width:10px;height:10px;border-radius:50%;border:1.5px solid var(--ink)}
+  .titlebar .dot.r{background:#ff6b6b}
+  .titlebar .dot.y{background:#ffd84d}
+  .titlebar .dot.g{background:#4ec27a}
+  .titlebar .title{font-family:'Kalam'; margin-left:8px; font-size:14px}
+  .terminal{
+    background:#1a1814; color:#f6f1e4; border-radius:8px;
+    padding:10px 12px; font-family:'JetBrains Mono'; font-size:12px;
+    line-height:1.55; border:2px solid var(--ink);
+  }
+  .terminal .pr{color:#ffcf3a}
+  .terminal .ok{color:#7ed99a}
+  .terminal .b{color:#8db4ff}
+  .terminal .dim{color:#a39e91}
+
+  /* Waveform sketch */
+  .wave{
+    height:34px; display:flex; align-items:center; gap:2px;
+  }
+  .wave i{display:inline-block; width:3px; background:var(--ink); border-radius:2px}
+
+  /* List markers handdrawn */
+  ul.hd{list-style:none; padding-left:0; margin:6px 0}
+  ul.hd li{position:relative; padding-left:22px; margin-bottom:4px}
+  ul.hd li::before{
+    content:"✦"; position:absolute; left:0; top:0; font-size:14px; color:var(--accent-2);
+  }
+  ul.check{list-style:none; padding-left:0; margin:6px 0}
+  ul.check li{position:relative; padding-left:26px; margin-bottom:4px}
+  ul.check li::before{
+    content:""; position:absolute; left:0; top:4px; width:14px; height:14px;
+    border:2px solid var(--ink); border-radius:3px 4px 2px 5px;
+  }
+  ul.check li.done::after{
+    content:"✓"; position:absolute; left:2px; top:0; color:var(--accent-4); font-size:18px; font-family:'Caveat'; font-weight:700;
+  }
+
+  /* Side-by-side comparison */
+  .comp{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+  .comp .col-h{
+    font-family:'Kalam'; font-weight:700; padding:4px 8px;
+    border:2px solid var(--ink); border-radius:6px 10px 6px 10px;
+  }
+  .diff-add{background:#cfeede; padding:0 3px}
+  .diff-rem{background:#ffd6c2; padding:0 3px; text-decoration:line-through}
+
+  /* Foot */
+  footer{
+    border-top:2px solid var(--ink); padding:24px 56px; margin-top:40px;
+    color:var(--ink-soft); font-size:15px;
+    display:flex; gap:18px; flex-wrap:wrap; align-items:center;
+  }
+
+  /* "Next-steps" callout */
+  .callout{
+    border:2.5px solid var(--ink); border-radius:14px 18px 12px 16px;
+    background:#fff8d8; padding:14px 18px; box-shadow:4px 4px 0 var(--ink);
+    margin-top:24px;
+  }
+  .callout h4{margin-bottom:4px; display:flex; align-items:center; gap:8px}
+  .callout h4::before{content:"★"; color:var(--accent-2); font-size:22px}
+
+  /* Tag pills */
+  .tag{
+    display:inline-block; padding:1px 8px; border:1.5px solid var(--ink);
+    border-radius:6px; font-size:13px; margin-right:4px; background:var(--paper);
+  }
+  .tag.fav{background:var(--accent)}
+  .tag.alt{background:#cfdcff}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <span class="logo">W</span>
+    <div>
+      <h1>Whispr <span class="caveat" style="font-size:24px;color:var(--ink-soft)">— voice → formatted text, all local</span></h1>
+      <p class="lede">A scoping doc + low-fi wireframes for the tool: local Whisper transcription, an LLM that listens for trailing format commands, agent tools, and an A/B harness to benchmark engines.</p>
+    </div>
+    <span class="stamp">scope v0.1</span>
+  </div>
+  <div class="meta">
+    <span><b>For:</b> portfolio / GitHub showcase</span>
+    <span><b>Stack hint:</b> Ollama · whisper variants · LangChain</span>
+    <span><b>Status:</b> exploring directions</span>
+    <span><b>Updated:</b> May 21 2026</span>
+  </div>
+  <nav class="tabs" role="tablist">
+    <button role="tab" aria-selected="true"  data-target="scope">① Scope <span class="count">/ where to start</span></button>
+    <button role="tab" aria-selected="false" data-target="shape">② App Shape <span class="count">/ 4 options</span></button>
+    <button role="tab" aria-selected="false" data-target="flow">③ Capture Flow <span class="count">/ 4 options</span></button>
+    <button role="tab" aria-selected="false" data-target="format">④ Format Commands <span class="count">/ 4 options</span></button>
+    <button role="tab" aria-selected="false" data-target="ab">⑤ A/B Lab <span class="count">/ 4 options</span></button>
+    <button role="tab" aria-selected="false" data-target="tools">⑥ Agent + Tools <span class="count">/ 4 options</span></button>
+    <button role="tab" aria-selected="false" data-target="meta">⑦ Settings + History</button>
+  </nav>
+</header>
+
+<main>
+
+<!-- =========================================================
+     TAB 1 — SCOPE
+========================================================= -->
+<section data-tab="scope" class="active">
+  <div class="section-head">
+    <h2>① The Scope &nbsp;<span class="caveat" style="font-size:22px;color:var(--ink-soft)">— what are we building?</span></h2>
+    <span class="kicker">read this first ↓</span>
+  </div>
+  <p class="section-intro">
+    A local-first <span class="marker">push-to-talk → cleaned text</span> tool that goes one step further than Superwhisper: a small open-source LLM
+    reads the <em>tail</em> of every transcript looking for format intents ("…format as markdown", "…make a checklist"), then formats and/or routes the output via tools (clipboard, file, calendar, etc).
+    Two transcript engines run side-by-side so we can A/B Whisper variants vs Apple's on-device model.
+  </p>
+
+  <!-- Architecture sketch -->
+  <div class="card tilt-l" style="margin-bottom:24px">
+    <h3><span class="num">A</span> System architecture (one diagram)</h3>
+    <div class="sub">Three lanes — capture, brains, output — with two pluggable "engine racks" on either side.</div>
+    <div class="wf tall" style="min-height: 340px; height: 3px">
+      <span class="wf-label">whispr_arch.sketch</span>
+      <svg viewBox="0 0 980 320" width="100%" height="320" style="display:block">
+        <defs>
+          <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#1a1814"/>
+          </marker>
+          <filter id="rough"><feTurbulence baseFrequency="0.04" numOctaves="2" seed="3"/><feDisplacementMap in="SourceGraphic" scale="1.5"/></filter>
+        </defs>
+
+        <!-- column titles -->
+        <text x="100" y="22" font-family="Kalam" font-weight="700" font-size="18">① CAPTURE</text>
+        <text x="430" y="22" font-family="Kalam" font-weight="700" font-size="18">② BRAINS</text>
+        <text x="800" y="22" font-family="Kalam" font-weight="700" font-size="18">③ OUTPUT</text>
+
+        <!-- 1. Capture -->
+        <g filter="url(#rough)">
+          <rect x="30" y="50" width="220" height="60" rx="10" fill="#f6f1e4" stroke="#1a1814" stroke-width="2.5"/>
+          <rect x="30" y="140" width="220" height="60" rx="10" fill="#f6f1e4" stroke="#1a1814" stroke-width="2.5"/>
+          <rect x="30" y="230" width="220" height="60" rx="10" fill="#ffcf3a" stroke="#1a1814" stroke-width="2.5" style="height: 70px"/>
+        </g>
+        <text x="140" y="78" text-anchor="middle" font-family="Patrick Hand" font-size="15">🎙 Hotkey / menubar mic</text>
+        <text x="140" y="98" text-anchor="middle" font-family="Caveat" font-size="14" fill="#3a352c">user holds ⌥-space to record</text>
+
+        <text x="140" y="167" text-anchor="middle" font-family="Patrick Hand" font-size="15">📁 Drop file / paste URL</text>
+        <text x="140" y="187" text-anchor="middle" font-family="Caveat" font-size="14" fill="#3a352c">batch / re-process mode</text>
+
+        <text x="140" y="257" text-anchor="middle" font-family="Kalam" font-weight="700" font-size="15">🎧 Engine rack — STT</text>
+        <text x="140" y="278" text-anchor="middle" font-family="Patrick Hand" font-size="13">insanely-fast / whisper.cpp /</text>
+        <text x="140" y="292" text-anchor="middle" font-family="Patrick Hand" font-size="13">faster-whisper / MLX / Apple Speech</text>
+
+        <!-- 2. Brains -->
+        <g filter="url(#rough)">
+          <rect x="340" y="50" width="280" height="240" rx="14" fill="#f6f1e4" stroke="#1a1814" stroke-width="2.5"/>
+        </g>
+        <text x="480" y="78" text-anchor="middle" font-family="Kalam" font-weight="700" font-size="16">LLM brain (Ollama / llama.cpp)</text>
+
+        <g filter="url(#rough)">
+          <rect x="360" y="90" width="240" height="44" rx="8" fill="#cfdcff" stroke="#1a1814" stroke-width="2"/>
+          <rect x="360" y="142" width="240" height="44" rx="8" fill="#cfeede" stroke="#1a1814" stroke-width="2"/>
+          <rect x="360" y="194" width="240" height="44" rx="8" fill="#ffd6c2" stroke="#1a1814" stroke-width="2"/>
+          <rect x="360" y="246" width="240" height="36" rx="8" fill="#f6f1e4" stroke="#1a1814" stroke-width="2" stroke-dasharray="5 3"/>
+        </g>
+        <text x="480" y="117" text-anchor="middle" font-family="Patrick Hand" font-size="14">1. Clean &amp; punctuate transcript</text>
+        <text x="480" y="169" text-anchor="middle" font-family="Patrick Hand" font-size="14">2. Detect trailing format command</text>
+        <text x="480" y="221" text-anchor="middle" font-family="Patrick Hand" font-size="14">3. Route → format OR tool call</text>
+        <text x="480" y="269" text-anchor="middle" font-family="Caveat" font-size="14" fill="#3a352c">orchestrator: LangChain / CrewAI / DIY</text>
+
+        <!-- 3. Output -->
+        <g filter="url(#rough)">
+          <rect x="710" y="50" width="240" height="48" rx="10" fill="#f6f1e4" stroke="#1a1814" stroke-width="2.5"/>
+          <rect x="710" y="108" width="240" height="48" rx="10" fill="#f6f1e4" stroke="#1a1814" stroke-width="2.5"/>
+          <rect x="710" y="166" width="240" height="48" rx="10" fill="#f6f1e4" stroke="#1a1814" stroke-width="2.5"/>
+          <rect x="710" y="224" width="240" height="48" rx="10" fill="#ffcf3a" stroke="#1a1814" stroke-width="2.5"/>
+        </g>
+        <text x="830" y="79" text-anchor="middle" font-family="Patrick Hand" font-size="14">📋 Clipboard / paste-at-cursor</text>
+        <text x="830" y="137" text-anchor="middle" font-family="Patrick Hand" font-size="14">📝 Markdown / .md file</text>
+        <text x="830" y="195" text-anchor="middle" font-family="Patrick Hand" font-size="14">📅 Calendar / 📥 Obsidian / 🐙 GitHub</text>
+        <text x="830" y="252" text-anchor="middle" font-family="Kalam" font-weight="700" font-size="14">🔧 Engine rack — TOOLS</text>
+
+        <!-- arrows -->
+        <path d="M 250 80 C 290 80, 310 80, 340 90" fill="none" stroke="#1a1814" stroke-width="2" marker-end="url(#ar)"/>
+        <path d="M 250 170 C 290 170, 310 170, 340 165" fill="none" stroke="#1a1814" stroke-width="2" marker-end="url(#ar)"/>
+        <path d="M 250 260 C 290 260, 310 200, 340 200" fill="none" stroke="#1a1814" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#ar)"/>
+        <path d="M 620 170 C 660 170, 680 130, 710 130" fill="none" stroke="#1a1814" stroke-width="2" marker-end="url(#ar)"/>
+        <path d="M 620 220 C 660 220, 680 190, 710 190" fill="none" stroke="#1a1814" stroke-width="2" marker-end="url(#ar)"/>
+        <path d="M 620 260 C 660 260, 680 250, 710 248" fill="none" stroke="#1a1814" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#ar)"/>
+      </svg>
+    </div>
+
+    <div class="grid-3" style="margin-top:6px">
+      <div class="stack-sm">
+        <span class="label">capture</span>
+        <span class="scribble">two ways in: mic hotkey OR a file drop. Audio → bytes → engine rack.</span>
+      </div>
+      <div class="stack-sm">
+        <span class="label">brains</span>
+        <span class="scribble">cleanup → command-sniffing → formatter or tool call. All driven by a single, small local model.</span>
+      </div>
+      <div class="stack-sm">
+        <span class="label">output</span>
+        <span class="scribble">one paste-at-cursor by default, but the agent can also fan out to files, notes apps, calendars, GitHub…</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Decision matrix -->
+  <div class="card tilt-r" style="margin-bottom:24px">
+    <h3><span class="num">B</span> Decisions <span class="caveat" style="font-size:20px;color:var(--accent-4)">— now locked ✓</span></h3>
+    <div class="sub">Updated after your walkthrough. <b style="background:var(--accent);padding:0 4px">Highlighted tag</b> = the pick. Italic = noted but not chosen.</div>
+    <table class="decisions">
+      <thead>
+        <tr><th style="width:18%">Axis</th><th>Options considered</th><th style="width:28%">Your pick</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><b>App shape</b></td>
+          <td><span class="tag fav">menubar popover</span><span class="tag">floating pill</span><span class="tag fav">full window (Studio)</span><span class="tag">CLI + tray</span></td>
+          <td><span class="pick">menubar + Studio</span> <span class="scribble">two surfaces, one engine — see tab ②</span></td>
+        </tr>
+        <tr>
+          <td><b>STT engine(s)</b></td>
+          <td><span class="tag fav">insanely-fast-whisper</span><span class="tag">whisper.cpp</span><span class="tag">faster-whisper</span><span class="tag">MLX Whisper</span><span class="tag fav">Apple Speech</span></td>
+          <td><span class="pick">insanely-fast-whisper × Apple</span> <span class="scribble">headline A/B matchup</span></td>
+        </tr>
+        <tr>
+          <td><b>LLM runtime</b></td>
+          <td><span class="tag">Ollama</span><span class="tag fav">llama.cpp direct</span><span class="tag">MLX</span></td>
+          <td><span class="pick">llama.cpp</span> <span class="scribble">new ground — good learning</span></td>
+        </tr>
+        <tr>
+          <td><b>Default model</b></td>
+          <td><span class="tag">Llama 3.1 8B</span><span class="tag">Qwen 2.5 7B</span><span class="tag">Phi 4</span><span class="tag fav">Gemma 3</span></td>
+          <td><span class="pick">Gemma 3 (you said "4" — Gemma 3 is the current release; will pin to Gemma 4 once Google ships it)</span></td>
+        </tr>
+        <tr>
+          <td><b>Orchestration</b></td>
+          <td><span class="tag fav">LangChain</span><span class="tag">CrewAI</span><span class="tag">Roll-your-own</span></td>
+          <td><span class="pick">LangChain</span> <span class="scribble">single-agent path; tool calling via lc's tool API</span></td>
+        </tr>
+        <tr>
+          <td><b>Format-cmd parser</b></td>
+          <td><span class="tag">LLM classifier</span><span class="tag">regex / keyword</span><span class="tag fav">hybrid + learnable</span></td>
+          <td><span class="pick">hybrid · learnable vocab</span> <span class="scribble">regex fast path → LLM fallback → user-added phrases &amp; per-format hotkeys</span></td>
+        </tr>
+        <tr>
+          <td><b>A/B role</b></td>
+          <td><span class="tag">always-on diff</span><span class="tag fav">dedicated bench mode</span><span class="tag">one-shot eval</span></td>
+          <td><span class="pick">bench mode</span> <span class="scribble">separate route in Studio</span></td>
+        </tr>
+        <tr>
+          <td><b>Default output</b></td>
+          <td><span class="tag fav">paste-at-cursor / clipboard</span><span class="tag">always preview</span><span class="tag">always confirm</span></td>
+          <td><span class="pick">paste-at-cursor by default</span> <span class="scribble">commands like "create markdown file" override</span></td>
+        </tr>
+        <tr>
+          <td><b>Tools surface</b></td>
+          <td><span class="tag fav">clipboard</span><span class="tag fav">file.write</span><span class="tag fav">obsidian.append</span><span class="tag fav">calendar.create_event</span><span class="tag">+ github / shell (later)</span></td>
+          <td><span class="pick">clipboard · file · Obsidian · Calendar</span> <span class="scribble">v1 surface</span></td>
+        </tr>
+        <tr>
+          <td><b>Backend lang</b></td>
+          <td><span class="tag fav">Python</span><span class="tag">Rust</span><span class="tag">TS / Node</span></td>
+          <td><span class="pick">Python</span> <span class="scribble">whisper bindings, langchain, audio libs all live here</span></td>
+        </tr>
+        <tr>
+          <td><b>Platform</b></td>
+          <td><span class="tag fav">macOS-first (Apple Silicon)</span><span class="tag">Linux next</span><span class="tag">Windows last</span></td>
+          <td><span class="pick">macOS-first</span> <span class="scribble">Silicon + Apple Speech are the win; Linux feasible later, Windows much later</span></td>
+        </tr>
+        <tr>
+          <td><b>UI shell</b></td>
+          <td><span class="tag fav">rumps (menubar)</span><span class="tag fav">pywebview (Studio)</span><span class="tag">PyObjC native</span><span class="tag">Tauri (Rust)</span><span class="tag">Electron</span></td>
+          <td><span class="pick">rumps × pywebview</span> <span class="scribble">one for each surface — see §E</span></td>
+        </tr>
+        <tr>
+          <td><b>Showcase</b></td>
+          <td><span class="tag fav">video demo</span><span class="tag">interactive web demo</span><span class="tag">blog post</span></td>
+          <td><span class="pick">video demo first</span> <span class="scribble">interactive demo later if there's energy</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="scribble" style="margin-top:10px">
+      <b>Why these picks make a coherent system →</b> Apple Speech gives a tough on-device baseline; insanely-fast-whisper is the open-source contender (batched, GPU-friendly, fast on Silicon).
+      llama.cpp is the right pairing for Gemma 3 quantized GGUFs and you'll learn the runtime from the ground up.
+      LangChain's tool-calling API maps cleanly onto our 4 tools. Hybrid + learnable parser keeps it fast in the common case while letting the model handle weird phrasings — and the "learnable" part is a feature you can show off in the demo video.
+    </div>
+  </div>
+
+  <!-- Milestones + repo layout -->
+  <div class="grid-2">
+    <div class="card">
+      <h3><span class="num">C</span> Milestones <span class="caveat" style="font-size:18px;color:var(--ink-soft)">— sequenced for the demo video</span></h3>
+      <ul class="check" style="margin-top:8px">
+        <li class="done"><b>M0 — Spike:</b> CLI calls insanely-fast-whisper, prints to stdout. (1 weekend)</li>
+        <li class="done"><b>M1 — Capture MVP:</b> hotkey record → transcribe → paste clipboard. No LLM. <span class="scribble">picks UI shell here</span></li>
+        <li><b>M2 — llama.cpp + Gemma cleanup:</b> in-loop punctuation, casing, disfluency removal. Diff visible.</li>
+        <li><b>M3 — Format commands:</b> hybrid parser → md / list / checklist / steps / table / prose. + per-format hotkey modifiers.</li>
+        <li><b>M4 — Tools v1:</b> <span class="mono">clipboard.copy</span>, <span class="mono">file.write</span>, <span class="mono">obsidian.append</span>, <span class="mono">calendar.create_event</span>.</li>
+        <li><b>M5 — A/B Bench:</b> insanely-fast-whisper × Apple Speech, WER + latency + word-diff view.</li>
+        <li><b>M6 — Learnable vocab:</b> UI to add "phrase → format/tool" mappings. Persisted to JSON.</li>
+        <li><b>M7 — Video demo + README polish.</b></li>
+        <li><b>M8 (stretch):</b> interactive web demo, CrewAI multi-agent toggle, Linux build.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><span class="num">D</span> Repo layout <span class="caveat" style="font-size:18px;color:var(--ink-soft)">— a Python project</span></h3>
+      <div class="terminal" style="font-size:11px;line-height:1.7">
+<span class="pr">whispr/</span>
+├── <span class="b">pyproject.toml</span>
+├── <span class="b">README.md</span>
+├── <span class="ok">whispr/</span><span class="dim">  ← Python package</span>
+│   ├── __main__.py        <span class="dim"># CLI entry</span>
+│   ├── <span class="ok">capture/</span>
+│   │   ├── hotkey.py      <span class="dim"># pynput / Quartz</span>
+│   │   └── audio.py       <span class="dim"># sounddevice</span>
+│   ├── <span class="ok">stt/</span>
+│   │   ├── base.py        <span class="dim"># Engine protocol</span>
+│   │   ├── ifw.py         <span class="dim"># insanely-fast-whisper</span>
+│   │   └── apple.py       <span class="dim"># pyobjc · Speech.framework</span>
+│   ├── <span class="ok">llm/</span>
+│   │   ├── runtime.py     <span class="dim"># llama-cpp-python bindings</span>
+│   │   ├── prompts/       <span class="dim"># split-prompt scaffolds</span>
+│   │   └── parser.py      <span class="dim"># hybrid format-cmd parser</span>
+│   ├── <span class="ok">agent/</span>
+│   │   ├── graph.py       <span class="dim"># LangChain agent</span>
+│   │   └── tools/
+│   │       ├── clipboard.py
+│   │       ├── file_write.py
+│   │       ├── obsidian.py
+│   │       └── calendar.py <span class="dim"># EventKit via pyobjc</span>
+│   ├── <span class="ok">bench/</span>
+│   │   ├── runner.py
+│   │   └── metrics.py     <span class="dim"># WER, latency</span>
+│   ├── <span class="ok">ui/</span>            <span class="dim"># swap based on §E choice</span>
+│   └── config.py
+├── <span class="ok">corpus/</span>          <span class="dim"># A/B audio + ground truth</span>
+└── <span class="ok">scripts/</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- E — UI options (Python world) -->
+  <div class="card tilt-l" style="margin-top:24px">
+    <h3><span class="num">E</span> UI shell — three options for a Python backend</h3>
+    <div class="sub">All three keep your Python code untouched; only the chrome differs. Tauri lives in Rust so we'd be wrapping Python with IPC — possible, but extra work. Skipping it.</div>
+    <div class="grid-3" style="margin-top:10px">
+      <div>
+        <h4 style="margin-bottom:4px">① <span class="underline-acc">rumps menubar</span> + popover</h4>
+        <div class="wf short">
+          <span class="wf-label">option_1</span>
+          <div style="height:14px;border-bottom:1.5px dashed var(--ink);display:flex;justify-content:flex-end;align-items:center;gap:6px;padding-right:6px;font-size:10px;color:var(--ink-soft)">🔋 🔊 <b style="background:var(--accent);padding:0 4px;border:1.5px solid var(--ink);border-radius:3px;font-size:9px">🎙</b> 12:04</div>
+          <div class="menubar-pop" style="margin:12px auto 0;width:200px;min-height:auto">
+            <div style="padding:8px">
+              <div class="row" style="justify-content:space-between;font-size:11px"><b>Whispr</b><span class="scribble" style="font-size:12px">⌥␣</span></div>
+              <div class="wave" style="margin-top:6px;height:18px"><i style="height:6px"></i><i style="height:12px"></i><i style="height:16px"></i><i style="height:10px"></i><i style="height:14px"></i><i style="height:8px"></i><i style="height:18px"></i><i style="height:12px"></i><i style="height:6px"></i></div>
+              <div class="box hl" style="margin-top:6px;font-size:10px;text-align:center">●  rec 0:08</div>
+            </div>
+          </div>
+        </div>
+        <div class="stack-sm" style="font-size:13px">
+          <div><b>Stack:</b> <span class="mono">rumps</span> + <span class="mono">tkinter</span> popover (or no popover — toast only)</div>
+          <div class="pros">100% Python. Tiny dependency. Ships in a weekend. Best fit for a CLI-ish hacker tool.</div>
+          <div class="cons">Toasts/popovers look dated. A/B Bench needs a separate window anyway.</div>
+          <div class="row" style="gap:6px"><span class="pill g" style="font-size:11px">fastest path</span><span class="pill" style="font-size:11px">my pick for v1</span></div>
+        </div>
+      </div>
+
+      <div>
+        <h4 style="margin-bottom:4px">② <span class="underline-acc">pywebview</span> + HTML/JS</h4>
+        <div class="wf short">
+          <span class="wf-label">option_2</span>
+          <div class="window-frame" style="max-width:220px;margin:0 auto">
+            <div class="titlebar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="title" style="font-size:11px">Whispr</span></div>
+            <div style="padding:8px;font-size:11px">
+              <div class="box" style="padding:4px 6px">milk, eggs, bread</div>
+              <div class="row" style="gap:4px;margin-top:6px"><span class="pill k" style="font-size:10px">md</span><span class="pill" style="font-size:10px">list</span><span class="pill" style="font-size:10px">check</span></div>
+              <div class="box hl" style="margin-top:6px;padding:4px 6px;text-align:center">↵ paste</div>
+            </div>
+          </div>
+        </div>
+        <div class="stack-sm" style="font-size:13px">
+          <div><b>Stack:</b> <span class="mono">pywebview</span> (native webview) + your own HTML/CSS/JS</div>
+          <div class="pros">Best-looking UI without bringing in JS frameworks. Same window can host menubar popover, Studio, and Bench. Easy to record demo video against.</div>
+          <div class="cons">Two-way JS↔Python bridge to wire. ~20MB binary.</div>
+          <div class="row" style="gap:6px"><span class="pill k" style="font-size:11px">best for demo video</span></div>
+        </div>
+      </div>
+
+      <div>
+        <h4 style="margin-bottom:4px">③ <span class="underline-acc">PyObjC</span> native AppKit</h4>
+        <div class="wf short">
+          <span class="wf-label">option_3</span>
+          <div class="window-frame" style="max-width:220px;margin:0 auto">
+            <div class="titlebar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="title" style="font-size:11px">Whispr.app</span></div>
+            <div style="padding:8px;font-size:11px">
+              <div class="box" style="padding:4px 6px;background:var(--paper-2)">▍ NSTextView</div>
+              <div class="row" style="gap:4px;margin-top:6px"><span class="box" style="padding:2px 6px;font-size:10px">NSSegmented</span></div>
+              <div class="box" style="margin-top:6px;padding:4px 6px;font-size:10px">⌘↵ Continue</div>
+            </div>
+          </div>
+        </div>
+        <div class="stack-sm" style="font-size:13px">
+          <div><b>Stack:</b> <span class="mono">pyobjc-framework-Cocoa</span> — write AppKit directly</div>
+          <div class="pros">Feels like a real Mac app. Free access to EventKit, Speech.framework, AVFoundation. Best Mac-native polish.</div>
+          <div class="cons">Steepest learning curve. AppKit + ObjC bridge quirks. Slowest to iterate on UI.</div>
+          <div class="row" style="gap:6px"><span class="pill" style="font-size:11px">best long-term polish</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="callout" style="margin-top:18px">
+      <h4>Locked: ① rumps × ② pywebview</h4>
+      <span>You want two surfaces — they get one shell each. <b>① rumps</b> drives the menubar / inline-dictation flow (the "I'm typing in a textbox, hold a key, drop text in" use case). <b>② pywebview</b> drives <b>Whispr Studio</b> — a real app window for planning lists, drafting markdown, the A/B Bench, calendar/Obsidian routing, and history. <b>③ PyObjC</b> sits on the shelf for when it's worth polishing later.</span>
+    </div>
+  </div>
+
+  <!-- F — what's still open -->
+  <div class="card tilt-r" style="margin-top:24px">
+    <h3><span class="num">F</span> Still open <span class="caveat" style="font-size:18px;color:var(--ink-soft)">— small calls before M1</span></h3>
+    <ul class="hd">
+      <li><b>Per-format hotkey modifiers</b> — proposed: hold ⌥␣ = default, ⌥⇧␣ = markdown file, ⌥⌃␣ = checklist. Or, just one hotkey + voice command. <span class="scribble">probably both: hotkey overrides voice command if held.</span></li>
+      <li><b>Obsidian target</b> — daily-note append vs. dedicated "inbox.md" vs. user picks per-vault. <span class="scribble">defaulting to daily-note unless you say otherwise.</span></li>
+      <li><b>Calendar default duration</b> — 30min? Or let the LLM infer from the phrase ("meeting tomorrow at 2 for an hour").</li>
+      <li><b>Audio storage</b> — keep raw .wav for every clip (corpus material) or delete after transcribe? <span class="scribble">keep for now — feeds the bench.</span></li>
+      <li><b>Privacy story for README</b> — soft mention or whole section? You're neutral; I'd do a soft mention + a "100% local" badge in the header.</li>
+    </ul>
+    <div class="callout">
+      <h4>Next step from here</h4>
+      <span>Decisions are locked enough to start. Say the word and I'll (a) deepen the menubar/preview wireframes on tab ③ to match the locked stack, (b) draft the actual M0/M1 Python scaffold, or (c) sketch the demo-video shot list. Pick one and we go.</span>
+    </div>
+  </div>
+</section>
+
+
+<!-- =========================================================
+     TAB 2 — APP SHAPE
+========================================================= -->
+<section data-tab="shape">
+  <div class="section-head">
+    <h2>② App Shape &nbsp;<span class="caveat" style="font-size:22px;color:var(--ink-soft)">— where does Whispr live?</span></h2>
+    <span class="kicker">4 directions, side-by-side</span>
+  </div>
+  <p class="section-intro">
+    Same engine, very different "feel". The choice constrains the rest of the design — a menubar popover wants tiny, glanceable wireframes; a full window wants panels and inspectors.
+  </p>
+
+  <div class="grid-4">
+    <!-- 1 Menubar -->
+    <div class="card tilt-l">
+      <h3><span class="num">1</span> Menubar popover</h3>
+      <div class="sub">⌥-space anywhere → drop-down from menu bar. Default winner.</div>
+      <div class="wf">
+        <span class="wf-label">menubar.png</span>
+        <!-- fake menubar strip -->
+        <div style="height:18px;border-bottom:1.5px dashed var(--ink);display:flex;justify-content:flex-end;align-items:center;gap:8px;padding-right:8px;font-size:11px;color:var(--ink-soft)">
+          🔋 🔊 <b style="background:var(--accent);padding:0 4px;border:1.5px solid var(--ink);border-radius:4px">🎙</b> 12:04
+        </div>
+        <div class="menubar-pop" style="margin:18px auto 0">
+          <div style="padding:12px">
+            <div class="row" style="justify-content:space-between"><b>Whispr</b><span class="scribble">⌥␣</span></div>
+            <div class="wave" style="margin-top:10px">
+              <i style="height:8px"></i><i style="height:16px"></i><i style="height:24px"></i><i style="height:30px"></i><i style="height:18px"></i><i style="height:26px"></i><i style="height:22px"></i><i style="height:12px"></i><i style="height:28px"></i><i style="height:20px"></i><i style="height:14px"></i><i style="height:24px"></i><i style="height:30px"></i><i style="height:16px"></i><i style="height:10px"></i><i style="height:22px"></i>
+            </div>
+            <div class="box dim" style="margin-top:10px;font-size:12px">"…format this as a checklist."</div>
+            <div class="row" style="margin-top:10px;justify-content:space-between">
+              <span class="pill k">●  rec  0:08</span>
+              <span class="pill dot">checklist</span>
+            </div>
+            <div class="box shadow hl" style="margin-top:10px;text-align:center;font-size:13px">⌘ ↵  finish &amp; paste</div>
+          </div>
+        </div>
+      </div>
+      <div class="pros">tiny footprint, always one keystroke away, doesn't grab focus.</div>
+      <div class="cons">small canvas — hard to show diffs / agent reasoning.</div>
+    </div>
+
+    <!-- 2 Floating pill -->
+    <div class="card tilt-r">
+      <h3><span class="num">2</span> Floating capture pill</h3>
+      <div class="sub">Always-on-top mini oval; grows during recording, expands to card on stop.</div>
+      <div class="wf">
+        <span class="wf-label">pill.png</span>
+        <div style="height:240px;background:repeating-linear-gradient(45deg,transparent 0 8px,rgba(0,0,0,.04) 8px 9px);border-radius:8px;position:relative">
+          <div style="position:absolute;top:30px;left:24px;font-size:12px;color:var(--ink-soft);font-family:'Caveat'">(your desktop / app behind)</div>
+          <!-- collapsed pill -->
+          <div style="position:absolute;bottom:36px;right:28px;display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+            <div class="row pill k shadow" style="padding:4px 12px"><span style="font-size:11px">●</span> 0:12 <span class="wave" style="margin-left:6px"><i style="height:6px"></i><i style="height:12px"></i><i style="height:8px"></i><i style="height:14px"></i><i style="height:10px"></i><i style="height:6px"></i></span></div>
+            <!-- expanded card -->
+            <div class="box shadow" style="width:240px;background:var(--paper)">
+              <div class="row" style="justify-content:space-between;font-size:12px"><b>last clip</b><span class="scribble">2s ago</span></div>
+              <div style="font-size:12px;margin-top:6px;line-height:1.4">"go to the store, buy milk, eggs, bread… <span class="marker">make a list</span>"</div>
+              <div class="row" style="gap:6px;margin-top:8px">
+                <span class="pill b" style="font-size:11px">↩ paste</span>
+                <span class="pill g" style="font-size:11px">📋 copy</span>
+                <span class="pill" style="font-size:11px">↺ redo</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="pros">visible feedback without stealing focus; great for screen recording demos.</div>
+      <div class="cons">windowing/drag UX is fiddly; can feel "always in the way".</div>
+    </div>
+
+    <!-- 3 Full window -->
+    <div class="card tilt-l">
+      <h3><span class="num">3</span> Full window app</h3>
+      <div class="sub">A "studio" — sidebar history, big editor, A/B always visible.</div>
+      <div class="wf tall">
+        <span class="wf-label">studio.png</span>
+        <div class="window-frame" style="max-width:380px;margin:6px auto 0">
+          <div class="titlebar">
+            <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+            <span class="title">Whispr Studio</span>
+          </div>
+          <div style="display:grid;grid-template-columns:90px 1fr;min-height:200px">
+            <div style="border-right:1.5px dashed var(--ink);padding:8px;font-size:11px;background:var(--paper-2)">
+              <div class="scribble">today</div>
+              <div class="box" style="padding:4px 6px;margin:4px 0;font-size:11px;background:var(--accent)">groceries.md</div>
+              <div class="box" style="padding:4px 6px;margin:4px 0;font-size:11px">standup notes</div>
+              <div class="box" style="padding:4px 6px;margin:4px 0;font-size:11px">jira-ish idea</div>
+              <div class="scribble">yesterday</div>
+              <div class="box" style="padding:4px 6px;margin:4px 0;font-size:11px">meeting raw</div>
+            </div>
+            <div style="padding:8px">
+              <div class="row" style="justify-content:space-between;font-size:11px"><b>groceries.md</b><span class="pill k" style="font-size:10px;padding:1px 6px">●  rec</span></div>
+              <div class="comp" style="margin-top:8px;font-size:10.5px;gap:6px">
+                <div>
+                  <div class="col-h" style="font-size:11px;padding:2px 6px">whisper</div>
+                  <div class="box" style="font-size:10px;padding:4px;margin-top:4px">go to the store buy milk eggs bread make a list</div>
+                </div>
+                <div>
+                  <div class="col-h" style="font-size:11px;padding:2px 6px;background:var(--accent)">apple</div>
+                  <div class="box" style="font-size:10px;padding:4px;margin-top:4px">go to store. buy milk eggs bread. make a list.</div>
+                </div>
+              </div>
+              <div class="box hl" style="margin-top:8px;font-size:11px">• milk &nbsp; • eggs &nbsp; • bread</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="pros">room for A/B, agent traces, history, settings — best for SHOWCASE screenshots.</div>
+      <div class="cons">overkill for the actual "speak → text" use case; heavier to build.</div>
+    </div>
+
+    <!-- 4 CLI + tray -->
+    <div class="card tilt-r">
+      <h3><span class="num">4</span> CLI + tray hybrid</h3>
+      <div class="sub">Power-user. Pipes for everything. Tray icon is the only GUI.</div>
+      <div class="wf">
+        <span class="wf-label">cli.png</span>
+        <div class="terminal">
+          <div><span class="pr">$</span> whispr record --format=md --tool=clipboard</div>
+          <div class="dim">┌─ listening (⌃C to stop) ──────────────────</div>
+          <div class="dim">│ </div>
+          <div class="dim">│ </div>
+          <div class="dim">└────────────────────────────────────────────</div>
+          <div><span class="ok">✓</span> 12.4s audio · faster-whisper · 0.83s</div>
+          <div><span class="b">→</span> command detected: <span class="ok">"format as markdown"</span></div>
+          <div><span class="b">→</span> tool: clipboard (copied 412 chars)</div>
+          <div><span class="pr">$</span> whispr bench --engines=fw,apple,mlx --N=20</div>
+        </div>
+        <div class="row" style="margin-top:10px;justify-content:space-between">
+          <span class="pill k">tray icon: 🎙</span>
+          <span class="scribble">menu → start / stop / open last</span>
+        </div>
+      </div>
+      <div class="pros">scriptable, scriptable, scriptable. Resonates with HN/GitHub audience.</div>
+      <div class="cons">no nice screenshots for the README header; UX work hidden.</div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <h4>Locked: (1) Menubar + (3) Studio</h4>
+    <span>
+      Both ship. <b>(1) Menubar popover</b> is the inline-dictation surface — hold a hotkey while a textbox is focused in your browser/editor, release, text lands. <b>(3) Studio window</b> is the planning surface — draft markdown files &amp; lists, browse history, run the A/B Bench, route to Obsidian/Calendar.
+      (2) and (4) are off the table for v1; the CLI can come back later as a scripting API.
+    </span>
+  </div>
+</section>
+
+
+<!-- =========================================================
+     TAB 3 — CAPTURE FLOW
+========================================================= -->
+<section data-tab="flow">
+  <div class="section-head">
+    <h2>③ Capture Flow &nbsp;<span class="caveat" style="font-size:22px;color:var(--ink-soft)">— from key-press to clipboard</span></h2>
+    <span class="kicker">4 takes on the core moment</span>
+  </div>
+  <p class="section-intro">
+    These all assume the menubar shape. The fork is how much friction sits between "I stopped talking" and "the formatted output is in my clipboard / file." Less friction = more trust-the-model; more friction = more user control.
+  </p>
+
+  <div class="grid-4">
+    <!-- A Zero-UI -->
+    <div class="card tilt-l">
+      <h3><span class="num">A</span> Zero-UI hold-to-talk</h3>
+      <div class="sub">No popover. Hold key, release, output pastes itself.</div>
+      <div class="wf">
+        <span class="wf-label">flow_A</span>
+        <div class="stack" style="font-size:13px">
+          <div class="row"><span class="pill k">hold ⌥␣</span> <span class="arr">↗</span> <span class="box">🎙 indicator beep</span></div>
+          <div class="row"><span class="pill">release ⌥␣</span> <span class="arr">↗</span> <span class="box ok">✓ paste-at-cursor</span></div>
+          <div class="box dim" style="font-size:12px">a tiny toast in the corner: "Formatted as markdown · ↩ undo"</div>
+          <div class="row" style="gap:6px"><span class="chip">no preview</span><span class="chip">no edit</span><span class="chip">trust the model</span></div>
+        </div>
+      </div>
+      <div class="pros">fastest possible; feels magical when it works.</div>
+      <div class="cons">no chance to fix bad transcript before it lands in the doc you were typing.</div>
+    </div>
+
+    <!-- B Toggle + preview -->
+    <div class="card tilt-r">
+      <h3><span class="num">B</span> Toggle → preview → confirm</h3>
+      <div class="sub">Tap to start, tap to stop, popover shows transcript + format. Enter to commit.</div>
+      <div class="wf">
+        <span class="wf-label">flow_B</span>
+        <div class="stack" style="font-size:13px">
+          <div class="menubar-pop" style="width:auto;max-width:300px;margin:0">
+            <div style="padding:12px">
+              <div class="row" style="justify-content:space-between"><b>preview</b><span class="pill k" style="font-size:11px">md</span></div>
+              <div class="box dim" style="margin-top:6px;font-size:12px">
+                "# Groceries\n- milk\n- eggs\n- bread"
+              </div>
+              <div class="row" style="margin-top:8px;gap:6px">
+                <span class="pill g" style="font-size:11px">↵ paste</span>
+                <span class="pill b" style="font-size:11px">⌘ E edit</span>
+                <span class="pill r" style="font-size:11px">esc discard</span>
+              </div>
+              <div class="row" style="margin-top:8px;justify-content:space-between">
+                <span class="scribble">format ▾</span><span class="scribble">model ▾ qwen2.5</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="pros">safety net; user can re-pick format if model guessed wrong.</div>
+      <div class="cons">extra keystroke per use; loses the "instant" feel.</div>
+    </div>
+
+    <!-- C Growing bubble -->
+    <div class="card tilt-l">
+      <h3><span class="num">C</span> Growing bubble</h3>
+      <div class="sub">Floating pill grows into a card; chips on the card let you re-route the output.</div>
+      <div class="wf">
+        <span class="wf-label">flow_C</span>
+        <div class="stack" style="font-size:13px;align-items:center">
+          <span class="pill k shadow">●</span>
+          <span class="arr down">↓</span>
+          <div class="pill k shadow" style="padding:3px 14px">●  rec 0:09  <span class="wave" style="margin-left:6px"><i style="height:6px"></i><i style="height:14px"></i><i style="height:8px"></i><i style="height:12px"></i></span></div>
+          <span class="arr down">↓</span>
+          <div class="box shadow" style="width:220px">
+            "milk, eggs, bread"
+            <div class="row" style="margin-top:6px;gap:4px;flex-wrap:wrap">
+              <span class="pill" style="font-size:11px">→ paste</span>
+              <span class="pill" style="font-size:11px">→ Obsidian</span>
+              <span class="pill" style="font-size:11px">→ Reminders</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="pros">visually rewarding; routing as a first-class step.</div>
+      <div class="cons">popovers stacking on screen — risk of feeling busy.</div>
+    </div>
+
+    <!-- D Inspector -->
+    <div class="card tilt-r">
+      <h3><span class="num">D</span> Inspector pane</h3>
+      <div class="sub">For power use / A/B mode: both transcripts, the detected command, the agent's plan.</div>
+      <div class="wf tall">
+        <span class="wf-label">flow_D</span>
+        <div class="window-frame" style="max-width:340px;margin:0 auto">
+          <div class="titlebar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="title">inspector</span></div>
+          <div style="padding:10px;font-size:11px">
+            <div class="comp">
+              <div>
+                <div class="col-h" style="font-size:11px;padding:2px 6px">faster-whisper</div>
+                <div class="box" style="margin-top:4px;font-size:10px">milk eggs bread <span class="diff-rem">make list</span></div>
+              </div>
+              <div>
+                <div class="col-h" style="font-size:11px;padding:2px 6px;background:var(--accent)">apple speech</div>
+                <div class="box" style="margin-top:4px;font-size:10px">milk, eggs, bread, <span class="diff-add">make a list</span></div>
+              </div>
+            </div>
+            <div class="box dim" style="margin-top:8px;font-size:11px">
+              <b>command:</b> "make a list" → <span class="marker">format:list</span> (conf 0.92)
+            </div>
+            <div class="box" style="margin-top:6px;font-size:11px"><b>plan:</b> format → clipboard</div>
+            <div class="row" style="margin-top:8px;gap:6px">
+              <span class="pill g" style="font-size:11px">↵ ship</span>
+              <span class="pill b" style="font-size:11px">edit plan</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="pros">debugging gold; perfect for the GitHub demo video.</div>
+      <div class="cons">too heavy for daily use — should be a separate "studio" mode, not the default.</div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <h4>Locked: A standard · B as an option</h4>
+    <span>
+      <b>A (Zero-UI hold-to-talk)</b> is the default: hold ⌥␣, release, text lands at cursor with a tiny undo toast. A settings toggle (and a per-recording hotkey, e.g. ⌥⇧␣) flips it into <b>B (preview → confirm)</b> for when you want to see the formatted output before it commits — useful when you're dictating into something destructive or you just don't trust the model that day.
+      <b>D (inspector)</b> still lives in Studio for debugging / the demo video. <b>C</b> is shelved.
+    </span>
+  </div>
+</section>
+
+
+<!-- =========================================================
+     TAB 4 — FORMAT COMMANDS
+========================================================= -->
+<section data-tab="format">
+  <div class="section-head">
+    <h2>④ Format Commands &nbsp;<span class="caveat" style="font-size:22px;color:var(--ink-soft)">— "…format as markdown"</span></h2>
+    <span class="kicker">how does the model know what you want?</span>
+  </div>
+  <p class="section-intro">
+    The trailing-command pattern is the heart of the project. Two questions: <b>how do we detect it</b> (regex? LLM? both?) and <b>how do we surface it</b> (chip? sidebar? inline tag?).
+  </p>
+
+  <div class="grid-3" style="margin-bottom:24px">
+    <div class="card">
+      <h3><span class="num">●</span> Vocabulary</h3>
+      <div class="sub">Starter set of commands the parser will recognize.</div>
+      <div class="stack-sm" style="margin-top:6px">
+        <div><span class="pill k">format as markdown</span> → <span class="mono">.md</span></div>
+        <div><span class="pill k">make a list / bullet points</span> → <span class="mono">- item</span></div>
+        <div><span class="pill k">checklist / todo</span> → <span class="mono">[ ] item</span></div>
+        <div><span class="pill k">numbered / steps</span> → <span class="mono">1. step</span></div>
+        <div><span class="pill k">as a table</span> → <span class="mono">| a | b |</span></div>
+        <div><span class="pill k">draft an email to X</span> → email block</div>
+        <div><span class="pill k">add to my calendar</span> → tool call</div>
+        <div><span class="pill k">save as &lt;name&gt;.md</span> → tool: write_file</div>
+        <div><span class="pill k">commit it / ship it</span> → just run it</div>
+        <div><span class="pill" style="background:var(--paper)">just clean it up <span class="scribble">(default)</span></span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3><span class="num">●</span> Parser pipeline</h3>
+      <div class="sub">Hybrid: cheap path first, LLM fallback.</div>
+      <div class="wf short">
+        <div class="stack" style="font-size:13px">
+          <div class="box">raw transcript: "… milk, eggs, bread, <u>make a checklist</u>"</div>
+          <span class="arr down" style="align-self:center">↓</span>
+          <div class="row"><span class="pill b">step 1 · regex / phrase</span><span class="scribble">~10 patterns, instant</span></div>
+          <div class="row" style="gap:8px"><span class="pill g">hit? → done</span><span class="arr">→</span><span class="box ok">format:checklist (conf 1.0)</span></div>
+          <span class="arr down" style="align-self:center">↓</span>
+          <div class="row"><span class="pill r">step 2 · LLM classifier</span><span class="scribble">~150 tokens, ~200ms</span></div>
+          <div class="row" style="gap:8px"><span class="pill">"give me this as 3 sections"</span><span class="arr">→</span><span class="box hl2">format:markdown_sections</span></div>
+        </div>
+      </div>
+      <div class="scribble">low confidence → bubble a "Did you mean…" chip in the preview.</div>
+    </div>
+
+    <div class="card">
+      <h3><span class="num">●</span> Where the command "lives"</h3>
+      <div class="sub">In the prompt to the LLM, we split content from intent.</div>
+      <div class="terminal" style="font-size:11px">
+<span class="dim">## SYSTEM</span>
+You receive a noisy transcript that <span class="ok">may</span>
+end with a format command. Split into:
+  &lt;content&gt;...&lt;/content&gt;
+  &lt;intent&gt;clean | list | check |
+          steps | table | email |
+          markdown | tool:&lt;name&gt;&lt;/intent&gt;
+Then format &lt;content&gt; per &lt;intent&gt;.
+<span class="dim">## USER</span>
+"<span class="b">milk eggs bread make a checklist</span>"
+<span class="dim">## EXPECTED</span>
+&lt;content&gt;milk, eggs, bread&lt;/content&gt;
+&lt;intent&gt;check&lt;/intent&gt;
+- [ ] milk
+- [ ] eggs
+- [ ] bread
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-4">
+    <!-- 1 inline chip -->
+    <div class="card tilt-l">
+      <h3><span class="num">1</span> Inline chip at end</h3>
+      <div class="sub">Highlight the command words right inside the transcript.</div>
+      <div class="wf">
+        <span class="wf-label">surface_1</span>
+        <div class="box" style="font-size:13px;line-height:1.5">
+          go to the store and buy milk, eggs, bread, also some apples and bananas if they look good · <span class="marker">make a checklist</span> <span class="chip" style="background:var(--accent);font-size:11px">format:checklist · 0.92</span>
+        </div>
+      </div>
+      <div class="pros">most "natural" — the user sees their own words tagged.</div>
+      <div class="cons">cramped when transcript is long; hard to fit in menubar popover.</div>
+    </div>
+
+    <!-- 2 floating tag -->
+    <div class="card tilt-r">
+      <h3><span class="num">2</span> Floating format tag</h3>
+      <div class="sub">A tag floats over the popover header showing detected intent + confidence.</div>
+      <div class="wf">
+        <span class="wf-label">surface_2</span>
+        <div style="position:relative;padding-top:18px">
+          <div class="box shadow hl" style="position:absolute;top:0;left:20px;font-size:12px">📋 format:checklist · 0.92</div>
+          <div class="box" style="margin-top:16px;font-size:13px">
+            "milk, eggs, bread, make a checklist"
+          </div>
+        </div>
+      </div>
+      <div class="pros">scales to long transcripts; clean visual hierarchy.</div>
+      <div class="cons">hides the actual command words — feels a bit magical / opaque.</div>
+    </div>
+
+    <!-- 3 split pane -->
+    <div class="card tilt-l">
+      <h3><span class="num">3</span> Content / intent split pane</h3>
+      <div class="sub">Two columns: left = content, right = parsed plan.</div>
+      <div class="wf">
+        <span class="wf-label">surface_3</span>
+        <div class="comp">
+          <div>
+            <div class="col-h">content</div>
+            <div class="box" style="margin-top:4px;font-size:12px">milk, eggs, bread, also apples and bananas</div>
+          </div>
+          <div>
+            <div class="col-h" style="background:var(--accent)">intent</div>
+            <div class="box" style="margin-top:4px;font-size:12px">
+              <div><b>format:</b> checklist</div>
+              <div><b>title:</b> groceries</div>
+              <div><b>tool:</b> clipboard</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="pros">extremely legible for debugging + demos.</div>
+      <div class="cons">overkill for daily flow; belongs in Studio.</div>
+    </div>
+
+    <!-- 4 confidence bar -->
+    <div class="card tilt-r">
+      <h3><span class="num">4</span> Confidence + alternates</h3>
+      <div class="sub">Show top guess with a strip; user clicks to pick a different format.</div>
+      <div class="wf">
+        <span class="wf-label">surface_4</span>
+        <div class="stack-sm" style="font-size:12px">
+          <div class="row" style="gap:8px"><span class="pill k">checklist</span><span style="flex:1;background:var(--accent);height:8px;border:1.5px solid var(--ink);border-radius:6px;position:relative"><span style="position:absolute;left:0;top:0;bottom:0;width:92%;background:var(--accent-2);border-right:1.5px solid var(--ink)"></span></span><span>0.92</span></div>
+            <div class="row" style="gap:8px"><span class="pill">bullets</span><span style="flex:1;background:var(--paper);height:8px;border:1.5px solid var(--ink);border-radius:6px;position:relative"><span style="position:absolute;left:0;top:0;bottom:0;width:46%;background:#cfdcff"></span></span><span>0.46</span></div>
+          <div class="row" style="gap:8px"><span class="pill">prose</span><span style="flex:1;background:var(--paper);height:8px;border:1.5px solid var(--ink);border-radius:6px;position:relative"><span style="position:absolute;left:0;top:0;bottom:0;width:12%;background:#ffd6c2"></span></span><span>0.12</span></div>
+          <div class="row" style="gap:8px"><span class="pill">markdown</span><span style="flex:1;background:var(--paper);height:8px;border:1.5px solid var(--ink);border-radius:6px;position:relative"><span style="position:absolute;left:0;top:0;bottom:0;width:8%;background:#cfeede"></span></span><span>0.08</span></div>
+        </div>
+      </div>
+      <div class="pros">transparent + correctable — "what did the AI think?"</div>
+      <div class="cons">noisy default state; better as an expandable detail.</div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <h4>Locked: silent in menubar · 1 / 3 / 4 selectable in Studio</h4>
+    <span>
+      <b>Daily use (menubar)</b> — no surface at all. The hybrid parser infers intent and applies it; the only feedback is the formatted text landing at cursor + an undo toast. Zero friction.
+      <b>Studio</b> — ships all three: <b>(1) inline chip</b>, <b>(3) split content/intent pane</b>, and <b>(4) confidence + alternates</b>, switchable per preference (view toggle in the editor toolbar). (2) shelved — redundant with (1).
+      Hybrid parser stack (regex → LLM fallback) sits behind all of it.
+    </span>
+  </div>
+</section>
+
+
+<!-- =========================================================
+     TAB 5 — A/B LAB
+========================================================= -->
+<section data-tab="ab">
+  <div class="section-head">
+    <h2>⑤ A/B Lab &nbsp;<span class="caveat" style="font-size:22px;color:var(--ink-soft)">— whisper vs. apple, head-to-head</span></h2>
+    <span class="kicker">benchmark mode + always-on shadow option</span>
+  </div>
+  <p class="section-intro">
+    The A/B harness is part feature, part GitHub-portfolio asset. A separate "Bench" route + a Studio-only "shadow" toggle in the main app.
+  </p>
+
+  <div class="grid-4">
+    <!-- 1 Side by side -->
+    <div class="card tilt-l">
+      <h3><span class="num">1</span> Side-by-side diff</h3>
+      <div class="sub">Two transcripts, word-level diff highlight, one big "play" button.</div>
+      <div class="wf tall">
+        <span class="wf-label">bench_diff</span>
+        <div class="row" style="justify-content:space-between;align-items:center">
+          <span class="pill k">▶ play 0:14</span>
+          <span class="scribble">sample · meeting-clip-3.wav</span>
+        </div>
+        <div class="comp" style="margin-top:10px;font-size:12px">
+          <div>
+            <div class="col-h">faster-whisper · 0.41s</div>
+            <div class="box" style="margin-top:4px;line-height:1.5">
+              so I think the <span class="diff-add">main thing</span> we want to ship by friday is the new onboarding <span class="diff-rem">flo</span><span class="diff-add">flow</span> and the <span class="diff-rem">um</span> the data export feature.
+            </div>
+          </div>
+          <div>
+            <div class="col-h" style="background:var(--accent)">Apple Speech · 0.62s</div>
+            <div class="box" style="margin-top:4px;line-height:1.5">
+              So I think <span class="diff-rem">the main thing</span> we want to ship by Friday is the new onboarding flow, and the <span class="diff-add">um</span>, the data export feature.
+            </div>
+          </div>
+        </div>
+        <div class="row" style="margin-top:10px;gap:8px;font-size:12px">
+          <span class="pill g">WER 4.1%</span><span class="pill b">words 32</span>
+          <span class="pill g">WER 2.7%</span><span class="pill b">words 31</span>
+        </div>
+      </div>
+      <div class="pros">most useful for a real eval; great screenshot.</div>
+      <div class="cons">manual — doesn't scale beyond a dozen clips.</div>
+    </div>
+
+    <!-- 2 grid -->
+    <div class="card tilt-r">
+      <h3><span class="num">2</span> Engines × samples grid</h3>
+      <div class="sub">N engines down, M clips across. Heatmap-ish.</div>
+      <div class="wf">
+        <span class="wf-label">bench_grid</span>
+        <table style="border-collapse:collapse;font-size:11px;width:100%">
+          <thead>
+            <tr><th></th><th style="padding:2px 4px">clip 1</th><th style="padding:2px 4px">clip 2</th><th style="padding:2px 4px">clip 3</th><th style="padding:2px 4px">clip 4</th><th style="padding:2px 4px">avg</th></tr>
+          </thead>
+          <tbody>
+            <tr><td style="font-family:Kalam;font-weight:700">FW</td><td style="background:#cfeede;border:1px solid var(--ink)">2.1</td><td style="background:#fff4c4;border:1px solid var(--ink)">5.4</td><td style="background:#cfeede;border:1px solid var(--ink)">1.8</td><td style="background:#fff4c4;border:1px solid var(--ink)">4.0</td><td style="background:#cfeede;border:1px solid var(--ink);font-weight:700">3.3</td></tr>
+            <tr><td style="font-family:Kalam;font-weight:700">IF-W</td><td style="background:#cfeede;border:1px solid var(--ink)">2.4</td><td style="background:#cfeede;border:1px solid var(--ink)">3.9</td><td style="background:#cfeede;border:1px solid var(--ink)">2.0</td><td style="background:#ffd6c2;border:1px solid var(--ink)">6.2</td><td style="background:#cfeede;border:1px solid var(--ink);font-weight:700">3.6</td></tr>
+            <tr><td style="font-family:Kalam;font-weight:700">MLX</td><td style="background:#fff4c4;border:1px solid var(--ink)">4.7</td><td style="background:#cfeede;border:1px solid var(--ink)">3.1</td><td style="background:#fff4c4;border:1px solid var(--ink)">4.4</td><td style="background:#cfeede;border:1px solid var(--ink)">2.7</td><td style="background:#fff4c4;border:1px solid var(--ink);font-weight:700">3.7</td></tr>
+            <tr><td style="font-family:Kalam;font-weight:700">Apple</td><td style="background:#cfeede;border:1px solid var(--ink)">1.9</td><td style="background:#cfeede;border:1px solid var(--ink)">2.8</td><td style="background:#cfeede;border:1px solid var(--ink)">2.2</td><td style="background:#cfeede;border:1px solid var(--ink)">2.1</td><td style="background:#cfeede;border:1px solid var(--ink);font-weight:700">2.2</td></tr>
+            <tr><td style="font-family:Kalam;font-weight:700">cloud</td><td style="background:#cfeede;border:1px solid var(--ink)">1.5</td><td style="background:#cfeede;border:1px solid var(--ink)">2.1</td><td style="background:#cfeede;border:1px solid var(--ink)">1.7</td><td style="background:#cfeede;border:1px solid var(--ink)">1.9</td><td style="background:#cfeede;border:1px solid var(--ink);font-weight:700">1.8</td></tr>
+          </tbody>
+        </table>
+        <div class="scribble" style="margin-top:6px">numbers = WER %. green = best, yellow = ok, red = worst.</div>
+      </div>
+      <div class="pros">scales; produces the headline chart for the README.</div>
+      <div class="cons">needs a ground-truth corpus or you're just comparing engines to each other.</div>
+    </div>
+
+    <!-- 3 blind battle -->
+    <div class="card tilt-l">
+      <h3><span class="num">3</span> Blind battle</h3>
+      <div class="sub">Two unlabeled transcripts of the same clip; you click "A" or "B". Aggregates Elo.</div>
+      <div class="wf">
+        <span class="wf-label">bench_blind</span>
+        <div class="comp">
+          <div class="box" style="font-size:12px">"So I think the main thing we want to ship by Friday…"</div>
+          <div class="box" style="font-size:12px">"So I think we want to ship the main thing by Friday…"</div>
+        </div>
+        <div class="row" style="justify-content:center;gap:12px;margin-top:12px">
+          <span class="pill k shadow" style="padding:6px 22px">A better</span>
+          <span class="pill" style="padding:6px 22px">tie</span>
+          <span class="pill k shadow" style="padding:6px 22px">B better</span>
+        </div>
+        <div class="row" style="justify-content:space-between;margin-top:10px;font-size:12px">
+          <span class="scribble">round 7 / 20</span>
+          <span class="scribble">elo so far: FW 1042 · Apple 1058</span>
+        </div>
+      </div>
+      <div class="pros">honest signal of "which sounds more right"; fun shareable widget.</div>
+      <div class="cons">slow to gather data; mostly a portfolio gimmick.</div>
+    </div>
+
+    <!-- 4 leaderboard -->
+    <div class="card tilt-r">
+      <h3><span class="num">4</span> Leaderboard / dashboard</h3>
+      <div class="sub">Aggregate over your corpus: WER, latency, $/min, model size.</div>
+      <div class="wf">
+        <span class="wf-label">bench_board</span>
+        <table style="width:100%;font-size:12px;border-collapse:collapse">
+          <thead>
+            <tr>
+              <th style="text-align:left;border-bottom:2px solid var(--ink)">#</th>
+              <th style="text-align:left;border-bottom:2px solid var(--ink)">engine</th>
+              <th style="border-bottom:2px solid var(--ink)">WER</th>
+              <th style="border-bottom:2px solid var(--ink)">latency</th>
+              <th style="border-bottom:2px solid var(--ink)">size</th>
+              <th style="border-bottom:2px solid var(--ink)">local?</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td><b>Apple Speech</b></td><td>2.2%</td><td>0.62s</td><td>OS</td><td>✓</td></tr>
+            <tr><td>2</td><td>faster-whisper L</td><td>3.3%</td><td>0.41s</td><td>1.5GB</td><td>✓</td></tr>
+            <tr><td>3</td><td>MLX whisper</td><td>3.7%</td><td>0.38s</td><td>1.5GB</td><td>✓</td></tr>
+            <tr><td>4</td><td>insanely-fast-whisper</td><td>3.6%</td><td><b>0.19s</b></td><td>1.5GB</td><td>✓</td></tr>
+            <tr><td>5</td><td>OpenAI cloud</td><td>1.8%</td><td>1.40s</td><td>—</td><td>✗</td></tr>
+          </tbody>
+        </table>
+        <div class="scribble" style="margin-top:6px">click a row → drill into per-clip diffs (view #1).</div>
+      </div>
+      <div class="pros">the "ahh-ha" view; everything in one screen.</div>
+      <div class="cons">needs the other three views to be the source of the numbers.</div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <h4>Locked: build 1 → 4 → 2 → 3</h4>
+    <span>
+      <b>(1) Side-by-side diff</b> ships first — it double-duties as the debug view for the LLM cleanup step. <b>(4) Leaderboard</b> next — it's the README screenshot. <b>(2) Engines×samples grid</b> follows as the receipts behind the leaderboard. <b>(3) Blind battle</b> last (or skipped) — fun but optional.
+    </span>
+  </div>
+</section>
+
+
+<!-- =========================================================
+     TAB 6 — AGENT + TOOLS
+========================================================= -->
+<section data-tab="tools">
+  <div class="section-head">
+    <h2>⑥ Agent + Tools &nbsp;<span class="caveat" style="font-size:22px;color:var(--ink-soft)">— "save as today.md" → it just does it</span></h2>
+    <span class="kicker">how does tool calling feel?</span>
+  </div>
+  <p class="section-intro">
+    Once the LLM can act, the trailing command stops being just "format" and starts being "<i>do this with this</i>." Big trust questions hang on this: does the user confirm tool calls, or do they trust-and-fire? How do we visualize what the agent did?
+  </p>
+
+  <!-- Tool registry summary -->
+  <div class="grid-3" style="margin-bottom:24px">
+    <div class="card">
+      <h3><span class="num">●</span> Tool registry (v1)</h3>
+      <ul class="check" style="margin-top:6px">
+        <li class="done"><b>clipboard.copy</b> — default; no permission needed</li>
+        <li class="done"><b>file.write</b> — to a configured "inbox" folder</li>
+        <li><b>obsidian.append</b> — to a daily-note in a chosen vault</li>
+        <li><b>calendar.create_event</b> — EventKit on macOS</li>
+        <li><b>reminders.create</b> — Reminders.app</li>
+        <li><b>github.create_issue</b> — repo whitelist</li>
+        <li><b>shell.run</b> — opt-in, allowlisted commands only</li>
+        <li><b>web.search</b> — DuckDuckGo / Brave</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><span class="num">●</span> Permission model <span class="caveat" style="font-size:16px;color:var(--accent-4)">— user-configurable</span></h3>
+      <div class="sub">Sensible defaults below; every tool has a permission level the user can flip in <b>Studio › Settings › Tools</b>.</div>
+      <div class="wf short" style="min-height:auto;margin-top:4px">
+        <table style="width:100%;font-size:13px;border-collapse:collapse">
+          <thead>
+            <tr>
+              <th style="text-align:left;border-bottom:2px solid var(--ink);padding-bottom:4px">tool</th>
+              <th style="border-bottom:2px solid var(--ink);padding-bottom:4px">auto</th>
+              <th style="border-bottom:2px solid var(--ink);padding-bottom:4px">ask</th>
+              <th style="border-bottom:2px solid var(--ink);padding-bottom:4px">off</th>
+            </tr>
+          </thead>
+          <tbody style="font-size:12.5px">
+            <tr><td>clipboard.copy</td><td style="text-align:center;background:var(--accent)">●</td><td style="text-align:center">○</td><td style="text-align:center">○</td></tr>
+            <tr><td>format → markdown / list / check</td><td style="text-align:center;background:var(--accent)">●</td><td style="text-align:center">○</td><td style="text-align:center">○</td></tr>
+            <tr><td>file.write → inbox folder</td><td style="text-align:center;background:var(--accent)">●</td><td style="text-align:center">○</td><td style="text-align:center">○</td></tr>
+            <tr><td>file.write → anywhere else</td><td style="text-align:center">○</td><td style="text-align:center;background:var(--accent)">●</td><td style="text-align:center">○</td></tr>
+            <tr><td>obsidian.append (daily note)</td><td style="text-align:center;background:var(--accent)">●</td><td style="text-align:center">○</td><td style="text-align:center">○</td></tr>
+            <tr><td>calendar.create_event</td><td style="text-align:center">○</td><td style="text-align:center;background:var(--accent)">●</td><td style="text-align:center">○</td></tr>
+            <tr><td>github.create_issue <span class="scribble">(later)</span></td><td style="text-align:center">○</td><td style="text-align:center;background:var(--accent)">●</td><td style="text-align:center">○</td></tr>
+            <tr><td>shell.run <span class="scribble">(later)</span></td><td style="text-align:center">○</td><td style="text-align:center;background:var(--accent)">●</td><td style="text-align:center">○</td></tr>
+            <tr><td>web.search <span class="scribble">(later)</span></td><td style="text-align:center">○</td><td style="text-align:center">○</td><td style="text-align:center;background:var(--accent)">●</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="scribble" style="margin-top:4px">
+        <b>auto</b> = just run, no prompt. <b>ask</b> = inline confirm with "remember this choice" toggle. <b>off</b> = tool not callable.
+        Rule of thumb: formatting + clipboard + writes to an opted-in folder are auto; anything that creates state in another app or runs code asks first.
+      </div>
+    </div>
+    <div class="card">
+      <h3><span class="num">●</span> Single vs multi-agent</h3>
+      <div class="stack-sm" style="margin-top:6px">
+        <div class="box hl" style="font-size:13px"><b>v1 — single agent</b>, LangChain function-calling. <span class="scribble">99% of cases.</span></div>
+        <div class="box" style="font-size:13px"><b>v2 — multi-agent toggle</b> (CrewAI): {transcriber} → {cleaner} → {formatter} → {router}. Mostly for the writeup / "look it can do this too."</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-4">
+    <!-- 1 inline timeline -->
+    <div class="card tilt-l">
+      <h3><span class="num">1</span> Inline reasoning timeline</h3>
+      <div class="sub">A vertical strip showing "thought → tool → result" right under the transcript.</div>
+      <div class="wf tall">
+        <span class="wf-label">tool_timeline</span>
+        <div class="stack" style="font-size:12px">
+          <div class="box dim">transcript ▸ "remind me to call mom tomorrow at 4, save it to reminders."</div>
+          <div class="row" style="gap:6px"><span class="pill b">think</span><span>"this is a calendar/reminder ask, not formatting."</span></div>
+          <div class="row" style="gap:6px"><span class="pill k">tool</span><span class="mono" style="font-size:11px">reminders.create({title:"call mom", due:"tomorrow 16:00"})</span></div>
+          <div class="row" style="gap:6px"><span class="pill g">✓ ok</span><span>"Reminder created in 'Personal'. Open?"</span></div>
+        </div>
+      </div>
+      <div class="pros">transparent; nice for screenshots.</div>
+      <div class="cons">can feel "AI-slop chatty" if the model is verbose.</div>
+    </div>
+
+    <!-- 2 card stack -->
+    <div class="card tilt-r">
+      <h3><span class="num">2</span> Tool-card stack</h3>
+      <div class="sub">Each tool call is its own card the user can collapse or undo.</div>
+      <div class="wf">
+        <span class="wf-label">tool_cards</span>
+        <div class="stack" style="font-size:12px">
+          <div class="box shadow ok">
+            <div class="row" style="justify-content:space-between"><b>📅 calendar.create_event</b><span class="scribble">↶ undo</span></div>
+            <div style="font-size:11px;margin-top:4px">"Call mom — Wed 4pm"</div>
+          </div>
+          <div class="box shadow">
+            <div class="row" style="justify-content:space-between"><b>📋 clipboard.copy</b><span class="scribble">↺ redo</span></div>
+            <div style="font-size:11px;margin-top:4px">"Reminder: call mom Wed 4pm."</div>
+          </div>
+          <div class="box shadow hl2">
+            <div class="row" style="justify-content:space-between"><b>📝 obsidian.append → daily/2026-05-21</b><span class="scribble">▸ open</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="pros">undo per-action is huge for trust.</div>
+      <div class="cons">vertical space hog when the model fans out.</div>
+    </div>
+
+    <!-- 3 tree -->
+    <div class="card tilt-l">
+      <h3><span class="num">3</span> Expandable plan tree</h3>
+      <div class="sub">The plan is a tree; tool calls are leaves; expand to see args/results.</div>
+      <div class="wf">
+        <span class="wf-label">tool_tree</span>
+        <div style="font-family:'JetBrains Mono';font-size:11px;line-height:1.8">
+          <div>▾ <b>plan</b> <span class="scribble">(qwen2.5)</span></div>
+          <div style="padding-left:16px">▾ format intent: <span class="marker">checklist</span></div>
+          <div style="padding-left:16px">▾ tool: <b>obsidian.append</b></div>
+          <div style="padding-left:32px;color:var(--ink-soft)">args = { path: "inbox.md", text: "- [ ] …" }</div>
+          <div style="padding-left:32px;color:var(--accent-4)">→ ok (47 bytes appended)</div>
+          <div style="padding-left:16px">▸ tool: clipboard.copy</div>
+        </div>
+      </div>
+      <div class="pros">structured, debuggable; perfect for Studio view.</div>
+      <div class="cons">"developer tool" energy — too engineery for casual users.</div>
+    </div>
+
+    <!-- 4 mission control -->
+    <div class="card tilt-r">
+      <h3><span class="num">4</span> Mission-control dashboard</h3>
+      <div class="sub">Real-time activity feed across all of Whispr's tools, system-wide.</div>
+      <div class="wf">
+        <span class="wf-label">tool_mission</span>
+        <div class="stack-sm" style="font-size:11px">
+          <div class="row" style="justify-content:space-between"><b>10:14 ▸ clip-1402.wav</b><span class="pill g">2.4s · ok</span></div>
+          <div class="box dim">→ format:bullets → clipboard ✓</div>
+          <div class="row" style="justify-content:space-between"><b>10:09 ▸ clip-1401.wav</b><span class="pill g">3.1s · ok</span></div>
+          <div class="box dim">→ tool:obsidian.append (inbox.md) ✓</div>
+          <div class="row" style="justify-content:space-between"><b>10:02 ▸ clip-1400.wav</b><span class="pill r">retry</span></div>
+          <div class="box warn">→ reminders.create — permission denied. <u>grant</u></div>
+        </div>
+      </div>
+      <div class="pros">essential for the "agent is doing things while I work" feeling.</div>
+      <div class="cons">v1 overkill; ships as a Studio panel later.</div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <h4>Locked: (2) daily · (3) Studio inspector · per-tool perms in Settings</h4>
+    <span>
+      Daily menubar flow: <b>(2) tool-card stack</b> appears only when the agent ran a non-trivial tool — each card has an undo and (if the tool needed an <i>ask</i>) the confirm button.
+      Studio: <b>(3) plan tree</b> for the inspector view + demo-video screenshots. <b>(4) mission control</b> later as a v2 "activity" tab.
+      Permission defaults above ship as-is; the user flips any of them in Studio › Settings › Tools.
+    </span>
+  </div>
+</section>
+
+
+<!-- =========================================================
+     TAB 7 — SETTINGS + HISTORY
+========================================================= -->
+<section data-tab="meta">
+  <div class="section-head">
+    <h2>⑦ Settings + History &nbsp;<span class="caveat" style="font-size:22px;color:var(--ink-soft)">— the boring-but-essential</span></h2>
+    <span class="kicker">two-pane Studio screens</span>
+  </div>
+  <p class="section-intro">
+    Less novel, but they make or break a portfolio project. Two takes on settings (compact / sectioned) and a history view that doubles as the corpus for the A/B Lab.
+  </p>
+
+  <div class="grid-2">
+    <!-- Settings -->
+    <div class="card">
+      <h3><span class="num">S</span> Settings — sectioned</h3>
+      <div class="sub">Studio window, left rail with categories, big right pane.</div>
+      <div class="wf tall">
+        <span class="wf-label">settings.png</span>
+        <div class="window-frame" style="max-width:520px;margin:0 auto">
+          <div class="titlebar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="title">Whispr — Settings</span></div>
+          <div style="display:grid;grid-template-columns:130px 1fr;min-height:280px">
+            <div style="border-right:1.5px dashed var(--ink);padding:10px;background:var(--paper-2);font-size:12px">
+              <div class="box hl" style="padding:4px 6px;margin-bottom:4px">🎙 Transcription</div>
+              <div class="box dim" style="padding:4px 6px;margin-bottom:4px">🧠 Model</div>
+              <div class="box dim" style="padding:4px 6px;margin-bottom:4px">⌨ Hotkeys</div>
+              <div class="box dim" style="padding:4px 6px;margin-bottom:4px">🔧 Tools</div>
+              <div class="box dim" style="padding:4px 6px;margin-bottom:4px">🗣 Format vocab</div>
+              <div class="box dim" style="padding:4px 6px;margin-bottom:4px">🧪 A/B Lab</div>
+              <div class="box dim" style="padding:4px 6px;margin-bottom:4px">🔒 Privacy</div>
+            </div>
+            <div style="padding:14px;font-size:12px">
+              <div class="row" style="justify-content:space-between"><b>Primary engine</b><span class="pill k" style="font-size:11px">faster-whisper · large-v3</span></div>
+              <div class="row" style="justify-content:space-between;margin-top:8px"><b>Shadow engine (A/B)</b><span class="pill" style="font-size:11px">Apple Speech</span></div>
+              <div class="row" style="justify-content:space-between;margin-top:8px"><b>Compute</b><span class="pill" style="font-size:11px">Metal · fp16</span></div>
+              <div class="row" style="justify-content:space-between;margin-top:8px"><b>Language</b><span class="pill" style="font-size:11px">auto-detect</span></div>
+              <div class="row" style="justify-content:space-between;margin-top:8px"><b>Initial prompt</b><span class="scribble">none</span></div>
+              <div class="box dim" style="margin-top:14px;font-size:11px">↺ "shadow engine" runs in parallel on every clip; results go to the Bench tab.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- History -->
+    <div class="card">
+      <h3><span class="num">H</span> History — corpus + activity</h3>
+      <div class="sub">Every recording is searchable; star to add to the A/B corpus.</div>
+      <div class="wf tall">
+        <span class="wf-label">history.png</span>
+        <div class="window-frame" style="max-width:520px;margin:0 auto">
+          <div class="titlebar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="title">Whispr — History</span></div>
+          <div style="padding:12px">
+            <div class="row" style="justify-content:space-between">
+              <div class="box" style="font-size:12px;flex:1">🔍 search transcripts…</div>
+              <span class="pill" style="margin-left:8px;font-size:11px">★ corpus only</span>
+            </div>
+            <div class="stack-sm" style="margin-top:10px;font-size:12px">
+              <div class="box shadow">
+                <div class="row" style="justify-content:space-between"><b>10:14 · groceries</b><span class="pill k" style="font-size:10px">checklist</span></div>
+                <div style="font-size:11px;color:var(--ink-soft);margin-top:2px">"milk, eggs, bread, make a checklist…"</div>
+                <div class="row" style="gap:6px;margin-top:4px"><span class="chip">★ corpus</span><span class="chip">→ Obsidian</span><span class="chip">0:18 · 0.41s</span></div>
+              </div>
+              <div class="box shadow">
+                <div class="row" style="justify-content:space-between"><b>09:48 · standup notes</b><span class="pill k" style="font-size:10px">markdown</span></div>
+                <div style="font-size:11px;color:var(--ink-soft);margin-top:2px">"shipped onboarding flow yesterday, today I'm…"</div>
+                <div class="row" style="gap:6px;margin-top:4px"><span class="chip">★ corpus</span><span class="chip">📋 clipboard</span><span class="chip">1:12 · 0.92s</span></div>
+              </div>
+              <div class="box shadow">
+                <div class="row" style="justify-content:space-between"><b>09:02 · idea</b><span class="pill k" style="font-size:10px">prose</span></div>
+                <div style="font-size:11px;color:var(--ink-soft);margin-top:2px">"the parser should also handle the case where…"</div>
+                <div class="row" style="gap:6px;margin-top:4px"><span class="chip">📝 inbox.md</span><span class="chip">0:34 · 0.58s</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2" style="margin-top:24px">
+    <!-- Hotkeys -->
+    <div class="card">
+      <h3><span class="num">K</span> Hotkeys</h3>
+      <div class="wf short">
+        <table style="width:100%;font-size:13px">
+          <tr><td><b>Record (hold)</b></td><td style="text-align:right"><span class="pill k">⌥ Space</span></td></tr>
+          <tr><td><b>Record (toggle)</b></td><td style="text-align:right"><span class="pill">⌥ ⇧ Space</span></td></tr>
+          <tr><td><b>Open last</b></td><td style="text-align:right"><span class="pill">⌥ L</span></td></tr>
+          <tr><td><b>Bench mode</b></td><td style="text-align:right"><span class="pill">⌥ B</span></td></tr>
+          <tr><td><b>Discard / undo</b></td><td style="text-align:right"><span class="pill">⌥ ⌫</span></td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- Format vocab editor -->
+    <div class="card">
+      <h3><span class="num">V</span> Format vocab editor</h3>
+      <div class="sub">Add your own trigger phrases. Maps to a format or a tool.</div>
+      <div class="wf short">
+        <div class="stack-sm" style="font-size:12px">
+          <div class="row" style="gap:6px"><span class="pill k">"format as markdown"</span><span class="arr">→</span><span class="pill">format:md</span></div>
+          <div class="row" style="gap:6px"><span class="pill k">"make a checklist"</span><span class="arr">→</span><span class="pill">format:check</span></div>
+          <div class="row" style="gap:6px"><span class="pill k">"add to my journal"</span><span class="arr">→</span><span class="pill b">tool:obsidian.append</span></div>
+          <div class="row" style="gap:6px"><span class="pill k">"file an issue"</span><span class="arr">→</span><span class="pill b">tool:github.create_issue</span></div>
+          <div class="box dim" style="font-size:12px;margin-top:6px">+ add phrase</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <h4>Direction is set ✓</h4>
+    <span>
+      With the locked stack (insanely-fast-whisper × Apple, llama.cpp + Gemma 3, LangChain, Python, macOS-first, learnable hybrid parser): tab ① now has milestones, repo layout, and 3 UI options. Tell me which UI option to deepen, and which tab — capture flow ③ or A/B Lab ⑤ — to mock up at higher fidelity next.
+    </span>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <span class="pill k">whispr v0.1</span>
+  <span class="scribble">b&amp;w wireframes — colors are placeholders; layout + behavior are the point.</span>
+  <span style="margin-left:auto" class="scribble">use the ← → tabs above to walk through</span>
+</footer>
+
+<script>
+  // Tab switching
+  const tabs = document.querySelectorAll('nav.tabs button');
+  const panes = document.querySelectorAll('section[data-tab]');
+  function activate(target){
+    tabs.forEach(b => b.setAttribute('aria-selected', b.dataset.target === target ? 'true' : 'false'));
+    panes.forEach(p => p.classList.toggle('active', p.dataset.tab === target));
+    history.replaceState(null, '', '#' + target);
+    window.scrollTo({top:0, behavior:'instant'});
+  }
+  tabs.forEach(b => b.addEventListener('click', () => activate(b.dataset.target)));
+
+  // Restore from hash
+  const h = (location.hash || '').replace('#','');
+  if (h && document.querySelector(`section[data-tab="${h}"]`)) activate(h);
+
+  // Keyboard ← → to walk tabs
+  document.addEventListener('keydown', e => {
+    if (e.target.matches('input, textarea')) return;
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    const order = Array.from(tabs).map(b => b.dataset.target);
+    const cur = order.indexOf(document.querySelector('nav.tabs button[aria-selected="true"]').dataset.target);
+    const nxt = e.key === 'ArrowRight' ? (cur+1)%order.length : (cur-1+order.length)%order.length;
+    activate(order[nxt]);
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,59 @@
+[project]
+name = "whispr"
+version = "0.1.0"
+description = "Local-first macOS voice-to-text studio — capture speech, transcribe on-device, format & route the result."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "pydantic",
+    "python-multipart",
+    "polars",
+    "transformers",
+    "torch",
+    "accelerate",
+    "optimum",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "httpx",
+    "ruff",
+    "mypy",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["backend/whispr"]
+
+[tool.uv]
+package = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["backend"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "UP", "B", "SIM"]
+
+[tool.mypy]
+python_version = "3.12"
+mypy_path = "backend"
+packages = ["whispr"]
+strict = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_return_any = true
+no_implicit_reexport = true
+
+[tool.pytest.ini_options]
+pythonpath = ["backend"]
+testpaths = ["backend"]
+addopts = "-ra"
