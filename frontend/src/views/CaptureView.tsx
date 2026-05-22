@@ -50,7 +50,7 @@ export function CaptureView({ state, dispatch, prefs }: CaptureViewProps) {
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <Chip tone="neutral" dot icon={null}>
               <span className="mono" style={{ fontSize: 11 }}>
-                gemma 3 · 4b · q4_k_m
+                gemma 4 · e4b · ud-q4_k_xl
               </span>
             </Chip>
             <Chip tone="success" dot>
