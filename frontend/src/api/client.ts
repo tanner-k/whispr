@@ -6,9 +6,9 @@
  * {@link ApiEnvelope}; this client unwraps it: on success it returns
  * `data`, on failure it throws {@link ApiError}.
  *
- * No endpoints are live yet — the backend lands in T6+.
+ * T6+ backend routes are live; capture uses this wrapper for multipart upload.
  */
-import type { ApiEnvelope } from '../types';
+import type { ApiEnvelope, Sample } from '../types';
 
 /** Base path for all API calls. Dev server proxies this to the backend. */
 const API_BASE = '/api';
@@ -39,10 +39,15 @@ function buildUrl(path: string): string {
  */
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   let response: Response;
+  const isFormData =
+    typeof FormData !== 'undefined' && init?.body !== undefined && init.body instanceof FormData;
+  const headers = isFormData
+    ? init?.headers
+    : { 'Content-Type': 'application/json', ...init?.headers };
   try {
     response = await fetch(buildUrl(path), {
-      headers: { 'Content-Type': 'application/json', ...init?.headers },
       ...init,
+      headers,
     });
   } catch (cause) {
     const detail = cause instanceof Error ? cause.message : 'Network request failed';
@@ -81,6 +86,15 @@ export function apiPost<T>(path: string, body?: unknown, init?: RequestInit): Pr
   });
 }
 
+/** POST `/api{path}` with multipart form data, returning the unwrapped payload. */
+export function apiPostForm<T>(path: string, body: FormData, init?: RequestInit): Promise<T> {
+  return request<T>(path, {
+    ...init,
+    method: 'POST',
+    body,
+  });
+}
+
 /** PUT `/api{path}` with a JSON body, returning the unwrapped payload. */
 export function apiPut<T>(path: string, body?: unknown, init?: RequestInit): Promise<T> {
   return request<T>(path, {
@@ -99,6 +113,15 @@ export function apiDelete<T>(path: string, init?: RequestInit): Promise<T> {
 export const apiClient = {
   get: apiGet,
   post: apiPost,
+  postForm: apiPostForm,
   put: apiPut,
   delete: apiDelete,
 } as const;
+
+/** Upload a recorded audio blob for transcription. */
+export function transcribeCapture(audio: Blob): Promise<Sample> {
+  const body = new FormData();
+  const extension = audio.type.includes('mp4') ? 'mp4' : 'webm';
+  body.append('audio', audio, `capture.${extension}`);
+  return apiPostForm<Sample>('/capture/transcribe', body);
+}

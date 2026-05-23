@@ -407,7 +407,7 @@ export function SettingsPrivacy({ state: _state, dispatch: _dispatch }: Settings
         <div>
           <div style={{ fontWeight: 600, color: 'var(--success)' }}>100% local right now</div>
           <div style={{ color: 'var(--text-2)', fontSize: 13, marginTop: 4, lineHeight: 1.6 }}>
-            insanely-fast-whisper, Apple Speech, llama.cpp, and Gemma 3 are all on-device. No tool
+            insanely-fast-whisper, Apple Speech, llama.cpp, and Gemma 4 are all on-device. No tool
             with cloud fallback is enabled.
           </div>
         </div>

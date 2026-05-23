@@ -8,8 +8,11 @@
  * RoutingBar). Inline styles and `var(--…)` theme references are
  * preserved verbatim.
  */
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { transcribeCapture } from '../api/client';
 import { Btn, Chip, Icon, Panel, SectionHeader, Segmented } from '../components';
-import type { CaptureState, Dispatch, FormatView } from '../state/capture';
+import type { CaptureAction, CaptureState, Dispatch, FormatView } from '../state/capture';
+import type { Sample } from '../types';
 import { CaptureCard } from './CaptureCard';
 import { ConfidenceView, FormattedOutput, InlineChipView, SplitPaneView } from './formatSurfaces';
 import { RoutingBar } from './RoutingBar';
@@ -30,12 +33,123 @@ export interface CaptureViewProps {
   dispatch: Dispatch;
   /** User preferences surfaced in the header copy. */
   prefs: { zeroUI: boolean };
+  /** Audio upload implementation, injectable for tests. */
+  transcribeAudio?: (audio: Blob) => Promise<Sample>;
 }
 
 /** The Capture view — capture card plus the ready-state pipeline. */
-export function CaptureView({ state, dispatch, prefs }: CaptureViewProps) {
+export function CaptureView({
+  state,
+  dispatch,
+  prefs,
+  transcribeAudio = transcribeCapture,
+}: CaptureViewProps) {
   const sample = state.current;
   const fmtView = state.formatView || 'inline';
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const cancelledRef = useRef(false);
+  const [captureError, setCaptureError] = useState<string | null>(null);
+
+  const stopStream = useCallback(() => {
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+    recorderRef.current = null;
+  }, []);
+
+  const finishTranscription = useCallback(
+    async (blob: Blob) => {
+      try {
+        const result = await transcribeAudio(blob);
+        dispatch({ type: 'rec:done', sample: result });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Transcription failed';
+        setCaptureError(message);
+        dispatch({ type: 'rec:cancel' });
+      }
+    },
+    [dispatch, transcribeAudio],
+  );
+
+  const startRecording = useCallback(async () => {
+    setCaptureError(null);
+    cancelledRef.current = false;
+    dispatch({ type: 'rec:start' });
+
+    try {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error('Microphone capture is not available in this browser');
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = createRecorder(stream);
+      streamRef.current = stream;
+      recorderRef.current = recorder;
+      chunksRef.current = [];
+
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) chunksRef.current.push(event.data);
+      };
+      recorder.onstop = () => {
+        const chunks = [...chunksRef.current];
+        chunksRef.current = [];
+        stopStream();
+        if (cancelledRef.current) {
+          cancelledRef.current = false;
+          return;
+        }
+        const mimeType = recorder.mimeType || chunks[0]?.type || 'audio/webm';
+        const blob = new Blob(chunks, { type: mimeType });
+        void finishTranscription(blob);
+      };
+
+      recorder.start();
+    } catch (error) {
+      stopStream();
+      const message = error instanceof Error ? error.message : 'Unable to start microphone capture';
+      setCaptureError(message);
+      dispatch({ type: 'rec:cancel' });
+    }
+  }, [dispatch, finishTranscription, stopStream]);
+
+  const captureDispatch = useCallback(
+    (action: CaptureAction) => {
+      if (action.type === 'rec:start') {
+        void startRecording();
+        return;
+      }
+      if (action.type === 'rec:stop') {
+        dispatch(action);
+        const recorder = recorderRef.current;
+        if (recorder && recorder.state !== 'inactive') {
+          recorder.stop();
+        }
+        return;
+      }
+      if (action.type === 'rec:cancel') {
+        cancelledRef.current = true;
+        const recorder = recorderRef.current;
+        if (recorder && recorder.state !== 'inactive') {
+          recorder.stop();
+        }
+        dispatch(action);
+        stopStream();
+        return;
+      }
+      dispatch(action);
+    },
+    [dispatch, startRecording, stopStream],
+  );
+
+  useEffect(() => {
+    return () => {
+      cancelledRef.current = true;
+      const recorder = recorderRef.current;
+      if (recorder && recorder.state !== 'inactive') recorder.stop();
+      stopStream();
+    };
+  }, [stopStream]);
 
   return (
     <div style={{ padding: '24px 32px', height: '100%', overflowY: 'auto' }}>
@@ -59,7 +173,7 @@ export function CaptureView({ state, dispatch, prefs }: CaptureViewProps) {
             <Btn
               icon={<Icon.spark size={14} />}
               variant="ghost"
-              onClick={() => dispatch({ type: 'demo:next' })}
+              onClick={() => captureDispatch({ type: 'demo:next' })}
             >
               Run demo
             </Btn>
@@ -68,7 +182,12 @@ export function CaptureView({ state, dispatch, prefs }: CaptureViewProps) {
       />
 
       {/* Big capture card */}
-      <CaptureCard state={state} dispatch={dispatch} />
+      <CaptureCard state={state} dispatch={captureDispatch} />
+      {captureError && (
+        <div style={{ marginTop: 10 }}>
+          <Chip tone="danger">{captureError}</Chip>
+        </div>
+      )}
 
       {state.phase === 'ready' && sample && (
         <div className="fade-up" style={{ marginTop: 20 }}>
@@ -79,7 +198,7 @@ export function CaptureView({ state, dispatch, prefs }: CaptureViewProps) {
               <Segmented
                 size="sm"
                 value={fmtView}
-                onChange={(v) => dispatch({ type: 'fmtView:set', v })}
+                onChange={(v) => captureDispatch({ type: 'fmtView:set', v })}
                 options={FORMAT_VIEW_OPTIONS}
               />
             }
@@ -90,7 +209,7 @@ export function CaptureView({ state, dispatch, prefs }: CaptureViewProps) {
               <ConfidenceView
                 sample={sample}
                 selected={state.selectedFormat || sample.format}
-                onPick={(f) => dispatch({ type: 'format:pick', f })}
+                onPick={(f) => captureDispatch({ type: 'format:pick', f })}
               />
             )}
           </Panel>
@@ -117,16 +236,27 @@ export function CaptureView({ state, dispatch, prefs }: CaptureViewProps) {
           {/* Tool calls */}
           {sample.tools.length > 0 && (
             <div style={{ marginTop: 14 }}>
-              <ToolCardStack tools={sample.tools} dispatch={dispatch} />
+              <ToolCardStack tools={sample.tools} dispatch={captureDispatch} />
             </div>
           )}
 
           {/* Routing bar */}
           <div style={{ marginTop: 14 }}>
-            <RoutingBar sample={sample} dispatch={dispatch} />
+            <RoutingBar sample={sample} dispatch={captureDispatch} />
           </div>
         </div>
       )}
     </div>
   );
+}
+
+function createRecorder(stream: MediaStream): MediaRecorder {
+  const preferred = 'audio/webm;codecs=opus';
+  if (
+    typeof MediaRecorder.isTypeSupported === 'function' &&
+    MediaRecorder.isTypeSupported(preferred)
+  ) {
+    return new MediaRecorder(stream, { mimeType: preferred });
+  }
+  return new MediaRecorder(stream);
 }
