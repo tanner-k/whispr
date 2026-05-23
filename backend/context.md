@@ -24,7 +24,7 @@ uv run python -m whispr
 ```
 
 ## Notes for agents
-- One route file per resource (e.g. `routes/users.ts`)
-- Validation at the edge (request → typed input) — never trust the client
-- Errors surface as typed problem objects; do not throw raw strings
-- All env access through a single `config.ts` — fail loudly if a required env var is missing
+- One route file per resource (e.g. `whispr/api/routes_history.py`)
+- Validation at the edge (request → Pydantic model) — never trust the client
+- Errors surface as typed problem objects / the standard API envelope; do not raise raw strings
+- All config/env access through a single `whispr/config.py` — fail loudly if a required value is missing

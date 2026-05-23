@@ -11,4 +11,13 @@
 <!-- Newest first -->
 
 ## 2026-05-22
+- T10 — Capture endpoint + real wiring
+- T9 — STT engine
+- T8 — API routers
+- T7 — Polars/Parquet store + seed data
+- T6 — Backend scaffold + data contracts
+- T5 — App shell + state machine
+- T4 — Port the 5 views
+- T3 — Port shared components
+- T2 — Frontend project setup (Vite + React + TS)
 - Scaffolded project from the Tree template

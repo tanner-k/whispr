@@ -14,6 +14,7 @@ Behaviour:
 
 No external dependencies — stdlib only.
 """
+
 from __future__ import annotations
 
 import datetime as dt
@@ -73,11 +74,17 @@ def add_to_changelog(desc: str, today: str) -> None:
 
 
 def latest_entries(n: int = 5) -> list[str]:
-    """Return the top `n` `- foo` lines from CHANGELOG.md, ignoring headings."""
+    """Return the newest `n` shipped entries from CHANGELOG.md."""
     if not LOG.exists():
         return []
     entries: list[str] = []
+    in_entries = False
     for ln in LOG.read_text().splitlines():
+        if ln.strip() == "<!-- Newest first -->":
+            in_entries = True
+            continue
+        if not in_entries:
+            continue
         if ln.startswith("- "):
             entries.append(ln)
             if len(entries) >= n:

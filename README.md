@@ -14,8 +14,10 @@ npm --prefix frontend install && uv sync
 ```
 
 ## Develop
+Run the backend and frontend in two terminals:
 ```bash
-npm --prefix frontend run dev (+ uv run python -m whispr)
+uv run python -m whispr          # FastAPI backend on :8000
+npm --prefix frontend run dev    # Vite dev server on :5173
 ```
 
 ## Test
@@ -35,7 +37,11 @@ _No CLI commands yet._
 Last 5 entries from [CHANGELOG.md](./CHANGELOG.md):
 
 <!-- BEGIN:RECENT-UPDATES -->
-- (auto-populated by `scripts/done.py` once you ship something)
+- T10 — Capture endpoint + real wiring
+- T9 — STT engine
+- T8 — API routers
+- T7 — Polars/Parquet store + seed data
+- T6 — Backend scaffold + data contracts
 <!-- END:RECENT-UPDATES -->
 
 ## Project map
