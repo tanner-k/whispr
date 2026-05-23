@@ -97,7 +97,7 @@ def test_capture_transcribe_persists_history_with_fake_engine(tmp_path: Path) ->
     assert sample["raw"] == "Milk, eggs, and bread. Format as checklist."
     assert sample["cleaned"] == "Milk, eggs, and bread."
     assert sample["format"] == "check"
-    assert sample["formatted"]["check"] == "- [ ] Milk\n- [ ] eggs\n- [ ] bread"
+    assert sample["formatted"]["check"] == "- [ ] Milk\n- [ ] Eggs\n- [ ] Bread"
     assert len(after_create) == len(initial) + 1
     assert after_create[-1]["id"] == f"h-{sample['id']}"
     assert after_create[-1]["format"] == "check"
