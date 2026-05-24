@@ -7,10 +7,12 @@ import platform
 from dataclasses import dataclass
 from pathlib import Path
 
-DEFAULT_STT_MODEL = "openai/whisper-large-v3"
+DEFAULT_STT_MODEL = "whisper.cpp:models/whisper.cpp/ggml-large-v3-q5_0.bin"
+DEFAULT_TRANSFORMERS_STT_MODEL = "openai/whisper-large-v3"
 DEFAULT_LLM_MODEL = "unsloth/gemma-4-E4B-it-GGUF:UD-Q4_K_XL"
 DEV_STT_MODEL = "dev/null-stt"
 DEV_LLM_MODEL = "dev/null-llm"
+DEFAULT_WHISPER_CPP_BIN = "whisper-cli"
 
 
 def repo_root() -> Path:
@@ -41,6 +43,7 @@ class AppSettings:
     frontend_dist: Path
     stt_model: str
     llm_model: str
+    whisper_cpp_bin: str
     device: str
     cors_origins: tuple[str, ...]
     dev_model_override: bool
@@ -63,6 +66,7 @@ class AppSettings:
             frontend_dist=Path(os.getenv("WHISPR_FRONTEND_DIST", root / "frontend" / "dist")),
             stt_model=stt_model,
             llm_model=llm_model,
+            whisper_cpp_bin=os.getenv("WHISPER_CPP_BIN", DEFAULT_WHISPER_CPP_BIN),
             device=os.getenv("WHISPR_DEVICE", select_device()),
             cors_origins=tuple(origin.strip() for origin in origins.split(",") if origin.strip()),
             dev_model_override=dev_models,

@@ -9,6 +9,7 @@ from typing import Annotated, cast
 from fastapi import Depends, Request
 
 from whispr.capture.audio import NormalizedAudio, decode_normalize_audio
+from whispr.llm.markdown import FallbackMarkdownSectioner, MarkdownSectioner
 from whispr.store import ParquetStore
 from whispr.stt import Engine
 
@@ -34,3 +35,13 @@ def get_audio_normalizer() -> AudioNormalizer:
 
 
 AudioNormalizerDep = Annotated[AudioNormalizer, Depends(get_audio_normalizer)]
+
+
+def get_markdown_sectioner(request: Request) -> MarkdownSectioner:
+    return cast(
+        MarkdownSectioner,
+        getattr(request.app.state, "markdown_sectioner", FallbackMarkdownSectioner()),
+    )
+
+
+MarkdownSectionerDep = Annotated[MarkdownSectioner, Depends(get_markdown_sectioner)]

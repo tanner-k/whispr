@@ -18,13 +18,15 @@ from whispr.api import (
     routes_health,
     routes_history,
     routes_settings,
+    routes_stt,
     routes_vocab,
 )
 from whispr.config import AppSettings
 from whispr.config import settings as default_settings
+from whispr.llm.markdown import create_markdown_sectioner
 from whispr.models import fail
 from whispr.store import ParquetStore, StoreError
-from whispr.stt.ifw import InsanelyFastWhisperEngine
+from whispr.stt import create_stt_engine
 
 
 def create_app(settings: AppSettings = default_settings) -> FastAPI:
@@ -38,8 +40,13 @@ def create_app(settings: AppSettings = default_settings) -> FastAPI:
 
     app = FastAPI(title="Whispr Studio API", lifespan=lifespan)
     app.state.store = store
-    app.state.stt_engine = InsanelyFastWhisperEngine(
+    app.state.stt_engine = create_stt_engine(
         settings.stt_model,
+        whisper_cpp_bin=settings.whisper_cpp_bin,
+        device=settings.device,
+    )
+    app.state.markdown_sectioner = create_markdown_sectioner(
+        settings.llm_model,
         device=settings.device,
     )
 
@@ -52,6 +59,7 @@ def create_app(settings: AppSettings = default_settings) -> FastAPI:
     )
 
     app.include_router(routes_health.router)
+    app.include_router(routes_stt.router)
     app.include_router(routes_capture.router)
     app.include_router(routes_history.router)
     app.include_router(routes_bench.router)

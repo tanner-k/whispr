@@ -48,6 +48,12 @@ class Sample(WhisprModel):
     routedTo: RouteTarget
 
 
+class RawTranscript(WhisprModel):
+    raw: str
+    duration: float = Field(ge=0)
+    sttMs: int = Field(ge=0)
+
+
 class HistoryItem(WhisprModel):
     id: str = Field(min_length=1)
     when: str = Field(min_length=1)

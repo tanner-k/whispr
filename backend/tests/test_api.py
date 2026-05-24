@@ -10,8 +10,19 @@ from fastapi.testclient import TestClient
 from whispr.api.app import create_app
 from whispr.api.deps import get_audio_normalizer, get_stt_engine
 from whispr.capture.audio import NormalizedAudio
-from whispr.config import DEFAULT_LLM_MODEL, DEFAULT_STT_MODEL, AppSettings
-from whispr.stt import TranscriptResult
+from whispr.config import (
+    DEFAULT_LLM_MODEL,
+    DEFAULT_STT_MODEL,
+    DEFAULT_WHISPER_CPP_BIN,
+    AppSettings,
+)
+from whispr.stt import SttError, TranscriptResult
+
+LONG_MARKDOWN_TRANSCRIPT = (
+    "Launch readiness update. The launch work is on track and the team finished the "
+    "accessibility pass this morning. Risks are billing webhook retries, pricing copy "
+    "approval, and support coverage for the first weekend. Format as markdown."
+)
 
 
 def make_settings(tmp_path: Path) -> AppSettings:
@@ -21,6 +32,7 @@ def make_settings(tmp_path: Path) -> AppSettings:
         frontend_dist=tmp_path / "dist",
         stt_model=DEFAULT_STT_MODEL,
         llm_model=DEFAULT_LLM_MODEL,
+        whisper_cpp_bin=DEFAULT_WHISPER_CPP_BIN,
         device="cpu",
         cors_origins=("http://testserver",),
         dev_model_override=False,
@@ -40,6 +52,21 @@ class FakeEngine:
             raw="Milk, eggs, and bread. Format as checklist.",
             duration=2.6,
         )
+
+
+class FakeMarkdownEngine:
+    def transcribe(self, path: Path) -> TranscriptResult:
+        assert path.name == "clip.webm"
+        return TranscriptResult(
+            raw=LONG_MARKDOWN_TRANSCRIPT,
+            duration=4.8,
+        )
+
+
+class FailingEngine:
+    def transcribe(self, path: Path) -> TranscriptResult:
+        assert path.name == "clip.webm"
+        raise SttError("whisper.cpp model not found")
 
 
 def fake_normalize(path: Path, _output_dir: Path | None) -> NormalizedAudio:
@@ -101,6 +128,127 @@ def test_capture_transcribe_persists_history_with_fake_engine(tmp_path: Path) ->
     assert len(after_create) == len(initial) + 1
     assert after_create[-1]["id"] == f"h-{sample['id']}"
     assert after_create[-1]["format"] == "check"
+
+
+def test_raw_stt_transcribe_returns_transcript_without_history(tmp_path: Path) -> None:
+    app = create_app(make_settings(tmp_path))
+    app.dependency_overrides[get_stt_engine] = lambda: FakeEngine()
+    app.dependency_overrides[get_audio_normalizer] = lambda: fake_normalize
+
+    with TestClient(app) as client:
+        initial = unwrap(client.get("/api/history").json())
+        response = client.post(
+            "/api/stt/transcribe",
+            files={"audio": ("clip.webm", b"not-real-audio", "audio/webm")},
+        )
+        transcript = unwrap(response.json())
+        after_create = unwrap(client.get("/api/history").json())
+
+    assert response.status_code == 201
+    assert transcript["raw"] == "Milk, eggs, and bread. Format as checklist."
+    assert transcript["duration"] == 2.6
+    assert transcript["sttMs"] >= 0
+    assert after_create == initial
+
+
+def test_raw_stt_transcribe_rejects_empty_audio(tmp_path: Path) -> None:
+    app = create_app(make_settings(tmp_path))
+    app.dependency_overrides[get_stt_engine] = lambda: FakeEngine()
+    app.dependency_overrides[get_audio_normalizer] = lambda: fake_normalize
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/api/stt/transcribe",
+            files={"audio": ("clip.webm", b"", "audio/webm")},
+        )
+
+    assert response.status_code == 400
+    assert response.json()["error"] == "audio upload is empty"
+
+
+def test_raw_stt_transcribe_rejects_missing_audio(tmp_path: Path) -> None:
+    with TestClient(create_app(make_settings(tmp_path))) as client:
+        response = client.post("/api/stt/transcribe")
+
+    assert response.status_code == 422
+    assert response.json()["success"] is False
+
+
+def test_raw_stt_transcribe_returns_clear_engine_error(tmp_path: Path) -> None:
+    app = create_app(make_settings(tmp_path))
+    app.dependency_overrides[get_stt_engine] = lambda: FailingEngine()
+    app.dependency_overrides[get_audio_normalizer] = lambda: fake_normalize
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/api/stt/transcribe",
+            files={"audio": ("clip.webm", b"not-real-audio", "audio/webm")},
+        )
+
+    assert response.status_code == 503
+    assert response.json()["error"] == "whisper.cpp model not found"
+
+
+def test_capture_transcribe_returns_clear_engine_error(tmp_path: Path) -> None:
+    app = create_app(make_settings(tmp_path))
+    app.dependency_overrides[get_stt_engine] = lambda: FailingEngine()
+    app.dependency_overrides[get_audio_normalizer] = lambda: fake_normalize
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/api/capture/transcribe",
+            files={"audio": ("clip.webm", b"not-real-audio", "audio/webm")},
+        )
+
+    assert response.status_code == 503
+    assert response.json()["error"] == "whisper.cpp model not found"
+
+
+def test_capture_transcribe_returns_markdown_with_command_stripped(tmp_path: Path) -> None:
+    app = create_app(make_settings(tmp_path))
+    app.dependency_overrides[get_stt_engine] = lambda: FakeMarkdownEngine()
+    app.dependency_overrides[get_audio_normalizer] = lambda: fake_normalize
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/api/capture/transcribe",
+            files={"audio": ("clip.webm", b"not-real-audio", "audio/webm")},
+        )
+        sample = unwrap(response.json())
+
+    assert response.status_code == 201
+    assert sample["raw"] == LONG_MARKDOWN_TRANSCRIPT
+    assert sample["format"] == "markdown"
+    assert sample["cleaned"] == (
+        "Launch readiness update. The launch work is on track and the team finished the "
+        "accessibility pass this morning. Risks are billing webhook retries, pricing copy "
+        "approval, and support coverage for the first weekend."
+    )
+    assert "Format as markdown" not in sample["formatted"]["markdown"]
+
+
+def test_capture_transcribe_returns_sectioned_markdown_for_long_transcript(
+    tmp_path: Path,
+) -> None:
+    app = create_app(make_settings(tmp_path))
+    app.dependency_overrides[get_stt_engine] = lambda: FakeMarkdownEngine()
+    app.dependency_overrides[get_audio_normalizer] = lambda: fake_normalize
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/api/capture/transcribe",
+            files={"audio": ("clip.webm", b"not-real-audio", "audio/webm")},
+        )
+        sample = unwrap(response.json())
+
+    markdown = sample["formatted"]["markdown"]
+    assert response.status_code == 201
+    assert sample["format"] == "markdown"
+    assert "## Launch Readiness" in markdown
+    assert "## Risks" in markdown or "### Risks" in markdown
+    assert "- Billing webhook retries" in markdown
+    assert "- Pricing copy approval" in markdown
+    assert "- Support coverage for the first weekend" in markdown
 
 
 def test_vocab_crud_routes(tmp_path: Path) -> None:

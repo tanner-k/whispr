@@ -9,10 +9,11 @@ from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, UploadFile
 
-from whispr.api.deps import AudioNormalizerDep, StoreDep, SttEngineDep
+from whispr.api.deps import AudioNormalizerDep, MarkdownSectionerDep, StoreDep, SttEngineDep
 from whispr.capture.audio import AudioDecodeError
 from whispr.llm.parser import build_sample
 from whispr.models import ApiEnvelope, HistoryItem, Sample, ok
+from whispr.stt import SttError
 
 router = APIRouter(prefix="/api/capture", tags=["capture"])
 
@@ -23,6 +24,7 @@ async def transcribe_capture(
     store: StoreDep,
     stt_engine: SttEngineDep,
     normalize_audio: AudioNormalizerDep,
+    markdown_sectioner: MarkdownSectionerDep,
 ) -> ApiEnvelope[Sample]:
     """Transcribe uploaded browser audio, format it, and persist history."""
     if not audio.filename and not audio.content_type:
@@ -41,12 +43,21 @@ async def transcribe_capture(
             raise HTTPException(status_code=400, detail=str(exc)) from exc
 
         stt_started = time.perf_counter()
-        transcript = stt_engine.transcribe(normalized.path)
+        try:
+            transcript = stt_engine.transcribe(normalized.path)
+        except SttError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
         stt_ms = round((time.perf_counter() - stt_started) * 1000)
 
         llm_started = time.perf_counter()
         duration = transcript.duration or normalized.duration
-        sample = build_sample(transcript.raw, duration=duration, stt_ms=stt_ms, llm_ms=0)
+        sample = build_sample(
+            transcript.raw,
+            duration=duration,
+            stt_ms=stt_ms,
+            llm_ms=0,
+            markdown_sectioner=markdown_sectioner,
+        )
         llm_ms = round((time.perf_counter() - llm_started) * 1000)
         sample = sample.model_copy(update={"llmMs": llm_ms})
 

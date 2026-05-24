@@ -15,6 +15,10 @@ class TranscriptResult:
     duration: float
 
 
+class SttError(RuntimeError):
+    """Raised when an STT engine cannot complete transcription."""
+
+
 class Engine(Protocol):
     """Protocol implemented by all transcription engines."""
 

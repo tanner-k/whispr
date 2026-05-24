@@ -8,6 +8,8 @@ from dataclasses import dataclass
 
 from whispr.models import Format, FormatAlternate, Sample
 
+from .markdown import FallbackMarkdownSectioner, MarkdownSectioner
+
 FORMAT_COMMANDS: tuple[tuple[re.Pattern[str], Format], ...] = (
     (
         re.compile(
@@ -137,6 +139,7 @@ ALL_FORMATS: tuple[Format, ...] = (
     "email",
     "calendar",
 )
+MARKDOWN_SECTIONER = FallbackMarkdownSectioner()
 
 
 @dataclass(frozen=True, slots=True)
@@ -203,24 +206,35 @@ def parse_transcript(raw: str) -> ParsedTranscript:
     )
 
 
-def format_transcript(raw: str) -> FormatResult:
+def format_transcript(
+    raw: str,
+    *,
+    markdown_sectioner: MarkdownSectioner = MARKDOWN_SECTIONER,
+) -> FormatResult:
     """Parse intent and produce the structured formatter contract."""
     parsed = parse_transcript(raw)
     return FormatResult(
         type=parsed.format,
         raw_text=parsed.raw,
         cleaned_text=parsed.cleaned,
-        formatted_text=_format_text(parsed.cleaned, parsed.format),
+        formatted_text=_format_text(parsed.cleaned, parsed.format, markdown_sectioner),
         confidence=parsed.confidence,
         source=STRUCTURED_SOURCE,
         command=parsed.command,
     )
 
 
-def build_sample(raw: str, *, duration: float, stt_ms: int, llm_ms: int) -> Sample:
+def build_sample(
+    raw: str,
+    *,
+    duration: float,
+    stt_ms: int,
+    llm_ms: int,
+    markdown_sectioner: MarkdownSectioner = MARKDOWN_SECTIONER,
+) -> Sample:
     """Build a UI-ready sample from STT text using deterministic formatting."""
-    result = format_transcript(raw)
-    formatted = _formatted_outputs(result.cleaned_text)
+    result = format_transcript(raw, markdown_sectioner=markdown_sectioner)
+    formatted = _formatted_outputs(result.cleaned_text, markdown_sectioner)
     formatted[result.type] = result.formatted_text
     title = _title(result.cleaned_text)
     return Sample(
@@ -240,17 +254,20 @@ def build_sample(raw: str, *, duration: float, stt_ms: int, llm_ms: int) -> Samp
     )
 
 
-def _formatted_outputs(cleaned: str) -> dict[Format, str]:
-    return {fmt: _format_text(cleaned, fmt) for fmt in ALL_FORMATS}
+def _formatted_outputs(
+    cleaned: str,
+    markdown_sectioner: MarkdownSectioner,
+) -> dict[Format, str]:
+    return {fmt: _format_text(cleaned, fmt, markdown_sectioner) for fmt in ALL_FORMATS}
 
 
-def _format_text(cleaned: str, fmt: Format) -> str:
+def _format_text(cleaned: str, fmt: Format, markdown_sectioner: MarkdownSectioner) -> str:
     items = _items(cleaned)
     first = _title(cleaned)
     if fmt == "prose":
         return cleaned
     if fmt == "markdown":
-        return f"## {first}\n\n{cleaned}"
+        return markdown_sectioner.section(cleaned).markdown
     if fmt == "list":
         return "\n".join(f"- {item}" for item in items)
     if fmt == "check":

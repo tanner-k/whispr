@@ -6,7 +6,7 @@ import wave
 from pathlib import Path
 from typing import Any
 
-from whispr.config import DEFAULT_STT_MODEL, select_device
+from whispr.config import DEFAULT_TRANSFORMERS_STT_MODEL, select_device
 
 from .base import TranscriptResult
 
@@ -16,7 +16,7 @@ class InsanelyFastWhisperEngine:
 
     def __init__(
         self,
-        model_id: str = DEFAULT_STT_MODEL,
+        model_id: str = DEFAULT_TRANSFORMERS_STT_MODEL,
         *,
         device: str | None = None,
         chunk_length_s: int = 30,

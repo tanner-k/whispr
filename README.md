@@ -20,6 +20,24 @@ uv run python -m whispr          # FastAPI backend on :8000
 npm --prefix frontend run dev    # Vite dev server on :5173
 ```
 
+### STT engine
+The default STT path uses `whisper.cpp` via `whisper-cli` with the local model:
+`models/whisper.cpp/ggml-large-v3-q5_0.bin`.
+
+Install the CLI and model:
+```bash
+brew install whisper-cpp
+mkdir -p models/whisper.cpp
+curl -L --fail -o models/whisper.cpp/ggml-large-v3-q5_0.bin \
+  https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-q5_0.bin
+```
+
+Override with:
+```bash
+WHISPR_STT_MODEL=openai/whisper-base uv run python -m whispr
+WHISPR_STT_MODEL=whisper.cpp:/absolute/path/to/model.bin uv run python -m whispr
+```
+
 ## Test
 ```bash
 uv run pytest && npm --prefix frontend test

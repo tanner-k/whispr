@@ -50,3 +50,6 @@ venv/
 # Tool caches
 .eslintcache
 .prettiercache
+
+# Local model weights
+models/

@@ -4,8 +4,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from whispr.config import DEFAULT_LLM_MODEL, DEFAULT_STT_MODEL, AppSettings
-from whispr.models import HistoryItem, SettingsPatch, VocabItem
+from whispr.config import (
+    DEFAULT_LLM_MODEL,
+    DEFAULT_STT_MODEL,
+    DEFAULT_WHISPER_CPP_BIN,
+    AppSettings,
+)
+from whispr.models import HistoryItem, SettingsPatch, VocabItem, VocabTarget
 from whispr.seeds import BENCH_SAMPLES, DEMO_SAMPLES, HISTORY_ITEMS, VOCAB_INITIAL
 from whispr.store import ParquetStore
 
@@ -17,6 +22,7 @@ def make_settings(tmp_path: Path) -> AppSettings:
         frontend_dist=tmp_path / "dist",
         stt_model=DEFAULT_STT_MODEL,
         llm_model=DEFAULT_LLM_MODEL,
+        whisper_cpp_bin=DEFAULT_WHISPER_CPP_BIN,
         device="cpu",
         cors_origins=("http://testserver",),
         dev_model_override=False,
@@ -64,7 +70,7 @@ def test_vocab_round_trip_and_settings_patch(tmp_path: Path) -> None:
     vocab = VocabItem(
         id=100,
         phrase="ship as table",
-        target={"type": "format", "value": "table"},
+        target=VocabTarget(type="format", value="table"),
         builtin=False,
         hits=0,
     )
