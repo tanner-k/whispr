@@ -117,6 +117,22 @@ export interface BenchSample {
   appleWer: number;
 }
 
+/* ─── BenchStats ──────────────────────────────────────────────────
+ * Aggregate metrics across the bench corpus. Mirrors the backend
+ * `BenchStats` model returned by `GET /api/bench/stats`. */
+export interface BenchStats {
+  /** Number of clips in the corpus. */
+  sampleCount: number;
+  /** Mean insanely-fast-whisper word error rate (percentage). */
+  ifwWer: number;
+  /** Mean Apple Speech word error rate (percentage). */
+  appleWer: number;
+  /** Mean insanely-fast-whisper latency in milliseconds. */
+  ifwMs: number;
+  /** Mean Apple Speech latency in milliseconds. */
+  appleMs: number;
+}
+
 /* ─── VocabItem ───────────────────────────────────────────────────
  * A trigger phrase the parser listens for. From VOCAB_INITIAL in
  * studio-views.jsx. */
@@ -192,6 +208,18 @@ export interface Settings {
   };
   /** Per-tool permission settings. */
   tools: ToolPermission[];
+}
+
+/* ─── SettingsPatch ───────────────────────────────────────────────
+ * Partial update for the Settings view. Mirrors the backend
+ * `SettingsPatch` model accepted by `PATCH /api/settings`: each top-
+ * level section is optional, and within a section every field is
+ * optional. `tools`, when present, replaces the whole list. */
+export interface SettingsPatch {
+  transcription?: Partial<Settings['transcription']>;
+  model?: Partial<Settings['model']>;
+  privacy?: Partial<Settings['privacy']>;
+  tools?: ToolPermission[];
 }
 
 /* ─── ApiEnvelope ─────────────────────────────────────────────────

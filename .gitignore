@@ -53,3 +53,6 @@ venv/
 
 # Local model weights
 models/
+
+# Local Parquet store (runtime artifacts — re-seeded on first boot)
+data/*.parquet

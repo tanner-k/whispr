@@ -84,7 +84,9 @@ describe('App', () => {
     expect(screen.getByPlaceholderText('Search transcripts…')).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Bench' }));
-    expect(screen.getByText('Samples')).toBeInTheDocument();
+    // The Bench view loads its corpus asynchronously; assert on a static
+    // header control that renders immediately rather than data-driven text.
+    expect(screen.getByText('Run full sweep')).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Vocab' }));
     expect(screen.getByText(/Trigger phrases the parser listens for/)).toBeInTheDocument();
@@ -99,7 +101,7 @@ describe('App', () => {
   it('supports the Alt+B shortcut to open Bench', () => {
     render(<App />);
     fireEvent.keyDown(window, { key: 'b', altKey: true });
-    expect(screen.getByText('Samples')).toBeInTheDocument();
+    expect(screen.getByText('Run full sweep')).toBeInTheDocument();
   });
 
   it('runs the capture flow from recording to ready', async () => {

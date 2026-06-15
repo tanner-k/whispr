@@ -1,41 +1,112 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, within, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { SettingsView } from './SettingsView';
 import { SettingsModel } from './SettingsPanels';
 import { initialCapture } from '../state/capture';
+import type { Settings, SettingsPatch } from '../types';
+import { INITIAL_TOOLS } from './SettingsPanels';
 
 const state = initialCapture;
 
+/** A complete Settings fixture that matches the INITIAL_TOOLS defaults. */
+const FIXTURE_SETTINGS: Settings = {
+  transcription: {
+    primaryEngine: 'insanely-fast-whisper',
+    shadowEngine: 'Apple Speech',
+    initialPrompt: '',
+    language: 'auto',
+  },
+  model: {
+    runtime: 'llama.cpp',
+    model: 'UD-Q4_K_XL',
+    contextWindow: 8192,
+    temperature: 0.2,
+    multiAgent: false,
+  },
+  privacy: {
+    keepRawAudio: true,
+    audioRetention: '30d',
+    anonymousErrorReports: false,
+    allowCloudFallback: false,
+  },
+  tools: INITIAL_TOOLS,
+};
+
+/** Default fixture load function — returns the standard settings fixture. */
+function makeLoadSettings(override?: Partial<Settings>) {
+  return vi.fn(async (): Promise<Settings> => ({ ...FIXTURE_SETTINGS, ...override }));
+}
+
+/** Default no-op save spy — returns whatever is currently loaded. */
+function makeSaveSettings() {
+  return vi.fn(async (_patch: SettingsPatch): Promise<Settings> => FIXTURE_SETTINGS);
+}
+
 describe('SettingsView — tabs', () => {
-  it('renders the tab rail and defaults to the Tools panel', () => {
-    render(<SettingsView state={state} dispatch={vi.fn()} />);
+  it('renders the tab rail and defaults to the Tools panel', async () => {
+    render(
+      <SettingsView
+        state={state}
+        dispatch={vi.fn()}
+        loadSettings={makeLoadSettings()}
+        saveSettings={makeSaveSettings()}
+      />,
+    );
     expect(screen.getByRole('button', { name: 'Tools' })).toBeInTheDocument();
-    // Tools panel content.
+    // Tools panel content — must render immediately from the fallback list.
     expect(screen.getByText('Copy to clipboard')).toBeInTheDocument();
   });
 
   it('switches to the Transcription panel', async () => {
-    render(<SettingsView state={state} dispatch={vi.fn()} />);
+    render(
+      <SettingsView
+        state={state}
+        dispatch={vi.fn()}
+        loadSettings={makeLoadSettings()}
+        saveSettings={makeSaveSettings()}
+      />,
+    );
     await userEvent.click(screen.getByRole('button', { name: 'Transcription' }));
     expect(screen.getByText('Primary engine')).toBeInTheDocument();
     expect(screen.getByText('Shadow engine')).toBeInTheDocument();
   });
 
   it('switches to the Model panel', async () => {
-    render(<SettingsView state={state} dispatch={vi.fn()} />);
+    render(
+      <SettingsView
+        state={state}
+        dispatch={vi.fn()}
+        loadSettings={makeLoadSettings()}
+        saveSettings={makeSaveSettings()}
+      />,
+    );
     await userEvent.click(screen.getByRole('button', { name: 'Model' }));
     expect(screen.getByText('Context window')).toBeInTheDocument();
   });
 
   it('switches to the Hotkeys panel', async () => {
-    render(<SettingsView state={state} dispatch={vi.fn()} />);
+    render(
+      <SettingsView
+        state={state}
+        dispatch={vi.fn()}
+        loadSettings={makeLoadSettings()}
+        saveSettings={makeSaveSettings()}
+      />,
+    );
     await userEvent.click(screen.getByRole('button', { name: 'Hotkeys' }));
     expect(screen.getByText('Record (hold to talk)')).toBeInTheDocument();
   });
 
   it('switches to the Privacy panel', async () => {
-    render(<SettingsView state={state} dispatch={vi.fn()} />);
+    render(
+      <SettingsView
+        state={state}
+        dispatch={vi.fn()}
+        loadSettings={makeLoadSettings()}
+        saveSettings={makeSaveSettings()}
+      />,
+    );
     await userEvent.click(screen.getByRole('button', { name: 'Privacy' }));
     expect(screen.getByText('Privacy & data')).toBeInTheDocument();
     expect(screen.getByText('100% local right now')).toBeInTheDocument();
@@ -44,9 +115,17 @@ describe('SettingsView — tabs', () => {
 
 describe('SettingsView — Tools panel', () => {
   it('updates a permission row via its Segmented control', async () => {
-    render(<SettingsView state={state} dispatch={vi.fn()} />);
+    render(
+      <SettingsView
+        state={state}
+        dispatch={vi.fn()}
+        loadSettings={makeLoadSettings()}
+        saveSettings={makeSaveSettings()}
+      />,
+    );
+    // Wait for the fixture to load (replaces the fallback list).
+    await waitFor(() => expect(screen.getByText('5 auto')).toBeInTheDocument());
     // The header summary shows the running tallies (5 auto / 5 ask / 2 off).
-    expect(screen.getByText('5 auto')).toBeInTheDocument();
     expect(screen.getByText('5 ask')).toBeInTheDocument();
     expect(screen.getByText('2 off')).toBeInTheDocument();
     // "shell.run" (Run a shell command) starts at "off". Walk up from
@@ -58,6 +137,29 @@ describe('SettingsView — Tools panel', () => {
     // The tallies update: one more auto, one fewer off.
     expect(screen.getByText('6 auto')).toBeInTheDocument();
     expect(screen.getByText('1 off')).toBeInTheDocument();
+  });
+
+  it('calls saveSettings with the updated tools list when a permission changes', async () => {
+    const saveSettings = makeSaveSettings();
+    render(
+      <SettingsView
+        state={state}
+        dispatch={vi.fn()}
+        loadSettings={makeLoadSettings()}
+        saveSettings={saveSettings}
+      />,
+    );
+    // Wait for the fixture tools to load.
+    await waitFor(() => expect(screen.getByText('shell.run')).toBeInTheDocument());
+    const idCell = screen.getByText('shell.run');
+    const segRow = idCell.parentElement!.parentElement!.parentElement!;
+    await userEvent.click(within(segRow).getByRole('button', { name: 'Auto' }));
+    // saveSettings should have been called with a tools patch.
+    expect(saveSettings).toHaveBeenCalled();
+    const [patch] = saveSettings.mock.calls[0] as [SettingsPatch];
+    expect(patch.tools).toBeDefined();
+    const shellTool = patch.tools!.find((t) => t.id === 'shell.run');
+    expect(shellTool?.perm).toBe('auto');
   });
 });
 

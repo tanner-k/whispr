@@ -6,11 +6,17 @@
  * design-reference/project/studio-views.jsx. Inline styles and
  * `var(--…)` theme references are preserved verbatim. Local `useState`
  * replaces the prototype's aliased `vUseState`.
+ *
+ * Data is loaded from the backend via an injectable `loadHistory` prop
+ * (defaults to `listHistory` from the API client). The static shell
+ * (title, search box, filter chips) renders immediately; the list
+ * region shows a loading state while the fetch is in flight.
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { deleteHistory as apiDeleteHistory, listHistory } from '../api/client';
 import { Btn, Empty, FormatChip, Icon } from '../components';
 import type { CaptureState, Dispatch } from '../state/capture';
-import { HISTORY_ITEMS } from './historyData';
+import type { HistoryItem } from '../types';
 import { HistoryDetail } from './HistoryDetail';
 
 /** A list-filter chip. */
@@ -30,22 +36,72 @@ export interface HistoryViewProps {
   state: CaptureState;
   /** Action dispatcher. Unused by the view today, kept for parity. */
   dispatch: Dispatch;
+  /** History list loader, injectable for tests. Defaults to the real API. */
+  loadHistory?: () => Promise<HistoryItem[]>;
+  /** Delete-by-id implementation, injectable for tests. Defaults to the real API. */
+  deleteHistory?: (id: string) => Promise<{ id: string }>;
 }
 
 /** The History view — transcript list on the left, detail on the right. */
-export function HistoryView({ state: _state, dispatch: _dispatch }: HistoryViewProps) {
+export function HistoryView({
+  state: _state,
+  dispatch: _dispatch,
+  loadHistory = listHistory,
+  deleteHistory = apiDeleteHistory,
+}: HistoryViewProps) {
   const [q, setQ] = useState('');
   const [filter, setFilter] = useState<HistoryFilter>('all');
-  const [sel, setSel] = useState('h1');
+  const [sel, setSel] = useState<string | null>(null);
 
-  const items = HISTORY_ITEMS.filter((it) => {
+  const [items, setItems] = useState<HistoryItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setLoadError(null);
+
+    loadHistory()
+      .then((rows) => {
+        if (cancelled) return;
+        setItems(rows);
+        setLoading(false);
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        const message = err instanceof Error ? err.message : 'Failed to load history';
+        setLoadError(message);
+        setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [loadHistory]);
+
+  const filtered = items.filter((it) => {
     if (filter === 'starred' && !it.starred) return false;
     if (filter === 'today' && !it.when.startsWith('Today')) return false;
     if (q && !(it.title.toLowerCase() + it.preview.toLowerCase()).includes(q.toLowerCase()))
       return false;
     return true;
   });
-  const selected = HISTORY_ITEMS.find((i) => i.id === sel) || items[0];
+
+  const selectedId = sel ?? items[0]?.id ?? null;
+  const selected = items.find((i) => i.id === selectedId) ?? filtered[0] ?? null;
+
+  function handleDelete(id: string): void {
+    deleteHistory(id)
+      .then(({ id: removedId }) => {
+        setItems((prev) => prev.filter((it) => it.id !== removedId));
+        if (selectedId === removedId) setSel(null);
+      })
+      .catch((err: unknown) => {
+        const message = err instanceof Error ? err.message : 'Delete failed';
+        setLoadError(message);
+      });
+  }
 
   return (
     <div style={{ height: '100%', display: 'grid', gridTemplateColumns: '380px 1fr' }}>
@@ -57,6 +113,7 @@ export function HistoryView({ state: _state, dispatch: _dispatch }: HistoryViewP
           minHeight: 0,
         }}
       >
+        {/* Static shell — always rendered, never gated on data */}
         <div style={{ padding: '18px 18px 12px', borderBottom: '1px solid var(--border)' }}>
           <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 10 }}>History</div>
           <div
@@ -97,8 +154,20 @@ export function HistoryView({ state: _state, dispatch: _dispatch }: HistoryViewP
             ))}
           </div>
         </div>
+
+        {/* List region — loading / error / empty / rows */}
         <div style={{ flex: 1, overflowY: 'auto' }}>
-          {items.length === 0 ? (
+          {loading ? (
+            <div
+              style={{ padding: 20, color: 'var(--text-mute)', fontSize: 13, textAlign: 'center' }}
+            >
+              Loading…
+            </div>
+          ) : loadError ? (
+            <div style={{ padding: 20, color: 'var(--danger, #e55)', fontSize: 13 }} role="alert">
+              {loadError}
+            </div>
+          ) : filtered.length === 0 ? (
             <div style={{ padding: 20 }}>
               <Empty
                 title="No matches"
@@ -107,7 +176,7 @@ export function HistoryView({ state: _state, dispatch: _dispatch }: HistoryViewP
               />
             </div>
           ) : (
-            items.map((it) => (
+            filtered.map((it) => (
               <button
                 key={it.id}
                 type="button"
@@ -117,8 +186,9 @@ export function HistoryView({ state: _state, dispatch: _dispatch }: HistoryViewP
                   textAlign: 'left',
                   padding: '12px 16px',
                   borderBottom: '1px solid var(--border)',
-                  background: sel === it.id ? 'var(--bg2)' : 'transparent',
-                  borderLeft: '2px solid ' + (sel === it.id ? 'var(--accent)' : 'transparent'),
+                  background: selectedId === it.id ? 'var(--bg2)' : 'transparent',
+                  borderLeft:
+                    '2px solid ' + (selectedId === it.id ? 'var(--accent)' : 'transparent'),
                   cursor: 'pointer',
                   display: 'flex',
                   flexDirection: 'column',
@@ -126,10 +196,10 @@ export function HistoryView({ state: _state, dispatch: _dispatch }: HistoryViewP
                   transition: 'background .12s',
                 }}
                 onMouseEnter={(e) => {
-                  if (sel !== it.id) e.currentTarget.style.background = 'var(--bg2)';
+                  if (selectedId !== it.id) e.currentTarget.style.background = 'var(--bg2)';
                 }}
                 onMouseLeave={(e) => {
-                  if (sel !== it.id) e.currentTarget.style.background = 'transparent';
+                  if (selectedId !== it.id) e.currentTarget.style.background = 'transparent';
                 }}
               >
                 <div
@@ -188,7 +258,7 @@ export function HistoryView({ state: _state, dispatch: _dispatch }: HistoryViewP
       </div>
 
       <div style={{ padding: '28px 32px', overflowY: 'auto' }}>
-        {selected && <HistoryDetail item={selected} />}
+        {selected && <HistoryDetail item={selected} onDelete={() => handleDelete(selected.id)} />}
       </div>
     </div>
   );

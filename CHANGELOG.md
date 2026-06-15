@@ -10,6 +10,9 @@
 
 <!-- Newest first -->
 
+## 2026-06-15
+- Wire History, Bench, Vocab & Settings views to the live backend API
+
 ## 2026-05-22
 - T10 — Capture endpoint + real wiring
 - T9 — STT engine

@@ -16,7 +16,8 @@ import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { Chip, Icon, Kbd, Panel, SectionHeader, Segmented, Switch } from '../components';
 import type { CaptureState, Dispatch } from '../state/capture';
-import type { PermissionLevel, ToolPermission } from '../types';
+import type { PermissionLevel, Settings, ToolPermission } from '../types';
+export { INITIAL_TOOLS } from './settingsData';
 
 /* ─── Field ───────────────────────────────────────────────────────── */
 
@@ -56,8 +57,16 @@ export function Field({ label, sub, children }: FieldProps) {
 
 /* ─── SettingsTranscription ───────────────────────────────────────── */
 
+/** Props for {@link SettingsTranscription}. */
+export interface SettingsTranscriptionProps {
+  /** Loaded transcription settings, or null while loading. */
+  transcription: Settings['transcription'] | null;
+  /** Called with a partial patch when a field changes. */
+  onSave: (patch: Partial<Settings['transcription']>) => void;
+}
+
 /** The Transcription panel — STT engine configuration. */
-export function SettingsTranscription() {
+export function SettingsTranscription({ transcription, onSave }: SettingsTranscriptionProps) {
   return (
     <div>
       <SectionHeader
@@ -66,7 +75,7 @@ export function SettingsTranscription() {
       />
       <Field label="Primary engine" sub="Used for every capture, results go to the cursor.">
         <Chip tone="accent" dot>
-          insanely-fast-whisper · large-v3
+          {transcription?.primaryEngine ?? 'insanely-fast-whisper · large-v3'}
         </Chip>
       </Field>
       <Field
@@ -74,7 +83,7 @@ export function SettingsTranscription() {
         sub="Runs in parallel on every clip. Results feed the bench tab."
       >
         <Chip tone="blue" dot>
-          Apple Speech
+          {transcription?.shadowEngine ?? 'Apple Speech'}
         </Chip>
       </Field>
       <Field label="Compute" sub="Apple Silicon Metal backend, fp16 weights.">
@@ -86,10 +95,22 @@ export function SettingsTranscription() {
         label="Initial prompt"
         sub="Optional text passed to whisper as context (improves accuracy on jargon)."
       >
-        <input className="field" placeholder="(none)" style={{ width: 280 }} />
+        <input
+          className="field"
+          placeholder="(none)"
+          style={{ width: 280 }}
+          defaultValue={transcription?.initialPrompt ?? ''}
+          key={transcription === null ? 'loading' : 'loaded'}
+          onBlur={(e) => onSave({ initialPrompt: e.currentTarget.value })}
+        />
       </Field>
       <Field label="Language" sub="Detected per clip, override here.">
-        <select className="field" style={{ width: 140 }} defaultValue="auto">
+        <select
+          className="field"
+          style={{ width: 140 }}
+          value={transcription?.language ?? 'auto'}
+          onChange={(e) => onSave({ language: e.currentTarget.value })}
+        >
           <option value="auto">Auto-detect</option>
           <option value="en">English</option>
         </select>
@@ -100,11 +121,19 @@ export function SettingsTranscription() {
 
 /* ─── SettingsModel ───────────────────────────────────────────────── */
 
+/** Props for {@link SettingsModel}. */
+export interface SettingsModelProps {
+  /** Loaded model settings, or null while loading. */
+  model?: Settings['model'] | null;
+  /** Called with a partial patch when a field changes. */
+  onSave?: (patch: Partial<Settings['model']>) => void;
+}
+
 /** The Model panel — the LLM that cleans transcripts and drives tools.
  *
  * The model `<select>` lists quants of `unsloth/gemma-4-E4B-it-GGUF`,
  * with `UD-Q4_K_XL` selected by default. */
-export function SettingsModel() {
+export function SettingsModel({ model = null, onSave = () => {} }: SettingsModelProps = {}) {
   return (
     <div>
       <SectionHeader
@@ -113,11 +142,16 @@ export function SettingsModel() {
       />
       <Field label="Runtime">
         <Chip tone="accent" dot icon={<Icon.cpu size={11} />}>
-          llama.cpp
+          {model?.runtime ?? 'llama.cpp'}
         </Chip>
       </Field>
       <Field label="Model" sub="GGUF, quantized.">
-        <select className="field" style={{ width: 240 }} defaultValue="UD-Q4_K_XL">
+        <select
+          className="field"
+          style={{ width: 240 }}
+          value={model?.model ?? 'UD-Q4_K_XL'}
+          onChange={(e) => onSave({ model: e.currentTarget.value })}
+        >
           <option value="UD-Q4_K_XL">gemma-4-E4B-it · UD-Q4_K_XL (5.13 GB)</option>
           <option value="Q4_K_M">gemma-4-E4B-it · Q4_K_M (4.98 GB)</option>
           <option value="UD-Q3_K_XL">gemma-4-E4B-it · UD-Q3_K_XL (4.59 GB)</option>
@@ -131,18 +165,27 @@ export function SettingsModel() {
           min="2048"
           max="32768"
           step="1024"
-          defaultValue="8192"
+          value={model?.contextWindow ?? 8192}
           style={{ width: 200 }}
+          onChange={(e) => onSave({ contextWindow: Number(e.currentTarget.value) })}
         />
       </Field>
       <Field label="Temperature" sub="Lower = more deterministic formatting.">
-        <input type="range" min="0" max="1" step="0.05" defaultValue="0.2" style={{ width: 200 }} />
+        <input
+          type="range"
+          min="0"
+          max="1"
+          step="0.05"
+          value={model?.temperature ?? 0.2}
+          style={{ width: 200 }}
+          onChange={(e) => onSave({ temperature: Number(e.currentTarget.value) })}
+        />
       </Field>
       <Field
         label="Multi-agent (experimental)"
         sub="Routes through transcriber → cleaner → formatter → router agents via CrewAI."
       >
-        <Switch on={false} onChange={() => {}} />
+        <Switch on={model?.multiAgent ?? false} onChange={(v) => onSave({ multiAgent: v })} />
       </Field>
     </div>
   );
@@ -188,87 +231,32 @@ export function SettingsHotkeys() {
 
 /* ─── SettingsTools ───────────────────────────────────────────────── */
 
-/** The initial per-tool permission rows. */
-const INITIAL_TOOLS: ToolPermission[] = [
-  {
-    id: 'clipboard.copy',
-    label: 'Copy to clipboard',
-    desc: 'Always-available; how outputs reach you in the menubar flow.',
-    perm: 'auto',
-  },
-  {
-    id: 'format.markdown',
-    label: 'Format → Markdown',
-    desc: 'Write .md output. No side effects beyond text.',
-    perm: 'auto',
-  },
-  {
-    id: 'format.list',
-    label: 'Format → List / check',
-    desc: 'Format-only transformations.',
-    perm: 'auto',
-  },
-  {
-    id: 'file.write.inbox',
-    label: 'Write to inbox folder',
-    desc: 'Writes into ~/Whispr/inbox/ only. You picked this folder.',
-    perm: 'auto',
-  },
-  {
-    id: 'file.write.any',
-    label: 'Write to other folders',
-    desc: 'Any path the agent specifies.',
-    perm: 'ask',
-  },
-  {
-    id: 'obsidian.append.daily',
-    label: 'Append to daily note',
-    desc: "Adds to today's note in your configured vault.",
-    perm: 'auto',
-  },
-  {
-    id: 'obsidian.append.other',
-    label: 'Append to other notes',
-    desc: 'Any path in the Obsidian vault.',
-    perm: 'ask',
-  },
-  {
-    id: 'calendar.create_event',
-    label: 'Create calendar event',
-    desc: 'Adds events to your default macOS Calendar.',
-    perm: 'ask',
-  },
-  {
-    id: 'reminders.create',
-    label: 'Create reminder',
-    desc: 'Adds items to macOS Reminders.',
-    perm: 'ask',
-  },
-  {
-    id: 'github.create_issue',
-    label: 'File a GitHub issue',
-    desc: 'Repos must be allowlisted below.',
-    perm: 'ask',
-  },
-  {
-    id: 'shell.run',
-    label: 'Run a shell command',
-    desc: 'Allowlist-restricted. Off by default.',
-    perm: 'off',
-  },
-  {
-    id: 'web.search',
-    label: 'Web search',
-    desc: 'DuckDuckGo / Brave. Sends the query off-device.',
-    perm: 'off',
-  },
-];
+/** Props for {@link SettingsTools}. */
+export interface SettingsToolsProps {
+  /** Current tool permission list (loaded from API or fallback to INITIAL_TOOLS). */
+  tools: ToolPermission[];
+  /** Called with the full updated list when a permission changes. */
+  onSave: (tools: ToolPermission[]) => void;
+}
 
 /** The Tools panel — per-tool permission rows with an Auto/Ask/Off control. */
-export function SettingsTools() {
-  const [perms, setPerms] = useState<ToolPermission[]>(INITIAL_TOOLS);
+export function SettingsTools({ tools, onSave }: SettingsToolsProps) {
+  const [perms, setPerms] = useState<ToolPermission[]>(tools);
+
+  // Sync if the loaded list arrives after mount (replaces the fallback).
+  // We track this by comparing identity — new reference means fresh load.
+  const [lastTools, setLastTools] = useState<ToolPermission[]>(tools);
+  if (tools !== lastTools) {
+    setLastTools(tools);
+    setPerms(tools);
+  }
+
   function set(id: string, perm: PermissionLevel) {
-    setPerms((arr) => arr.map((p) => (p.id === id ? { ...p, perm } : p)));
+    setPerms((arr) => {
+      const updated = arr.map((p) => (p.id === id ? { ...p, perm } : p));
+      onSave(updated);
+      return updated;
+    });
   }
   return (
     <div>
@@ -357,10 +345,19 @@ export interface SettingsPrivacyProps {
   state: CaptureState;
   /** Action dispatcher. Unused today, kept for prototype parity. */
   dispatch: Dispatch;
+  /** Loaded privacy settings, or null while loading. */
+  privacy: Settings['privacy'] | null;
+  /** Called with a partial patch when a field changes. */
+  onSave: (patch: Partial<Settings['privacy']>) => void;
 }
 
 /** The Privacy panel — data-retention and cloud-fallback toggles. */
-export function SettingsPrivacy({ state: _state, dispatch: _dispatch }: SettingsPrivacyProps) {
+export function SettingsPrivacy({
+  state: _state,
+  dispatch: _dispatch,
+  privacy,
+  onSave,
+}: SettingsPrivacyProps) {
   return (
     <div>
       <SectionHeader
@@ -371,10 +368,19 @@ export function SettingsPrivacy({ state: _state, dispatch: _dispatch }: Settings
         label="Keep raw audio"
         sub="Retains .wav files alongside transcripts. Needed for re-running through the bench."
       >
-        <Switch on={true} onChange={() => {}} />
+        <Switch on={privacy?.keepRawAudio ?? true} onChange={(v) => onSave({ keepRawAudio: v })} />
       </Field>
       <Field label="Audio retention" sub="Auto-delete clips after this long.">
-        <select className="field" style={{ width: 140 }} defaultValue="30d">
+        <select
+          className="field"
+          style={{ width: 140 }}
+          value={privacy?.audioRetention ?? '30d'}
+          onChange={(e) =>
+            onSave({
+              audioRetention: e.currentTarget.value as Settings['privacy']['audioRetention'],
+            })
+          }
+        >
           <option value="never">Never</option>
           <option value="30d">30 days</option>
           <option value="7d">7 days</option>
@@ -382,13 +388,19 @@ export function SettingsPrivacy({ state: _state, dispatch: _dispatch }: Settings
         </select>
       </Field>
       <Field label="Anonymous error reports" sub="Sends stack traces only — no transcripts.">
-        <Switch on={false} onChange={() => {}} />
+        <Switch
+          on={privacy?.anonymousErrorReports ?? false}
+          onChange={(v) => onSave({ anonymousErrorReports: v })}
+        />
       </Field>
       <Field
         label="Allow cloud fallback"
         sub="If a tool requires the internet (e.g. web.search), allow it."
       >
-        <Switch on={false} onChange={() => {}} />
+        <Switch
+          on={privacy?.allowCloudFallback ?? false}
+          onChange={(v) => onSave({ allowCloudFallback: v })}
+        />
       </Field>
       <div
         style={{
