@@ -8,7 +8,16 @@
  *
  * T6+ backend routes are live; capture uses this wrapper for multipart upload.
  */
-import type { ApiEnvelope, Sample } from '../types';
+import type {
+  ApiEnvelope,
+  BenchSample,
+  BenchStats,
+  HistoryItem,
+  Sample,
+  Settings,
+  SettingsPatch,
+  VocabItem,
+} from '../types';
 
 /** Base path for all API calls. Dev server proxies this to the backend. */
 const API_BASE = '/api';
@@ -104,6 +113,15 @@ export function apiPut<T>(path: string, body?: unknown, init?: RequestInit): Pro
   });
 }
 
+/** PATCH `/api{path}` with a JSON body, returning the unwrapped payload. */
+export function apiPatch<T>(path: string, body?: unknown, init?: RequestInit): Promise<T> {
+  return request<T>(path, {
+    ...init,
+    method: 'PATCH',
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+}
+
 /** DELETE `/api{path}`, returning the unwrapped payload. */
 export function apiDelete<T>(path: string, init?: RequestInit): Promise<T> {
   return request<T>(path, { ...init, method: 'DELETE' });
@@ -115,6 +133,7 @@ export const apiClient = {
   post: apiPost,
   postForm: apiPostForm,
   put: apiPut,
+  patch: apiPatch,
   delete: apiDelete,
 } as const;
 
@@ -124,4 +143,54 @@ export function transcribeCapture(audio: Blob): Promise<Sample> {
   const extension = audio.type.includes('mp4') ? 'mp4' : 'webm';
   body.append('audio', audio, `capture.${extension}`);
   return apiPostForm<Sample>('/capture/transcribe', body);
+}
+
+/* ─── Resource clients ────────────────────────────────────────────
+ * Thin typed wrappers over the REST routes the backend exposes. Views
+ * accept these as injectable props (defaulting to the real call) so
+ * tests can supply fixtures — mirroring `transcribeCapture` above. */
+
+/** List history rows, newest first (`GET /api/history`). */
+export function listHistory(): Promise<HistoryItem[]> {
+  return apiGet<HistoryItem[]>('/history');
+}
+
+/** Delete a history row by id (`DELETE /api/history/{id}`). */
+export function deleteHistory(id: string): Promise<{ id: string }> {
+  return apiDelete<{ id: string }>(`/history/${encodeURIComponent(id)}`);
+}
+
+/** List the bench corpus clips (`GET /api/bench/samples`). */
+export function listBenchSamples(): Promise<BenchSample[]> {
+  return apiGet<BenchSample[]>('/bench/samples');
+}
+
+/** Aggregate bench metrics (`GET /api/bench/stats`). */
+export function getBenchStats(): Promise<BenchStats> {
+  return apiGet<BenchStats>('/bench/stats');
+}
+
+/** List vocabulary trigger phrases (`GET /api/vocab`). */
+export function listVocab(): Promise<VocabItem[]> {
+  return apiGet<VocabItem[]>('/vocab');
+}
+
+/** Add a vocabulary phrase (`POST /api/vocab`). */
+export function addVocab(item: VocabItem): Promise<VocabItem> {
+  return apiPost<VocabItem>('/vocab', item);
+}
+
+/** Delete a vocabulary phrase by id (`DELETE /api/vocab/{id}`). */
+export function deleteVocab(id: number): Promise<{ id: number }> {
+  return apiDelete<{ id: number }>(`/vocab/${id}`);
+}
+
+/** Fetch the persisted settings (`GET /api/settings`). */
+export function getSettings(): Promise<Settings> {
+  return apiGet<Settings>('/settings');
+}
+
+/** Apply a partial settings update (`PATCH /api/settings`). */
+export function patchSettings(patch: SettingsPatch): Promise<Settings> {
+  return apiPatch<Settings>('/settings', patch);
 }

@@ -6,8 +6,13 @@
  * design-reference/project/studio-views.jsx. Inline styles and
  * `var(--…)` theme references are preserved verbatim. Local `useState`
  * replaces the prototype's aliased `vUseState`.
+ *
+ * API integration: loads vocab from the backend on mount via
+ * injectable props (same pattern as CaptureView's `transcribeAudio`),
+ * so the running app uses live data while tests inject fixtures.
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { addVocab, deleteVocab, listVocab } from '../api/client';
 import {
   Btn,
   Chip,
@@ -20,7 +25,6 @@ import {
 } from '../components';
 import type { CaptureState, Dispatch } from '../state/capture';
 import type { Format, VocabItem, VocabTargetType } from '../types';
-import { VOCAB_INITIAL } from './vocabData';
 
 /** The add-phrase form draft. */
 interface VocabDraft {
@@ -51,33 +55,84 @@ export interface VocabViewProps {
   state: CaptureState;
   /** Action dispatcher. Unused by the view today, kept for parity. */
   dispatch: Dispatch;
+  /** Vocab list loader, injectable for tests. Defaults to {@link listVocab}. */
+  loadVocab?: () => Promise<VocabItem[]>;
+  /** Phrase creator, injectable for tests. Defaults to {@link addVocab}. */
+  createVocab?: (item: VocabItem) => Promise<VocabItem>;
+  /** Phrase remover, injectable for tests. Defaults to {@link deleteVocab}. */
+  removeVocab?: (id: number) => Promise<{ id: number }>;
 }
 
 /** The Vocabulary view — phrase table plus inline add-phrase form. */
-export function VocabView({ state: _state, dispatch: _dispatch }: VocabViewProps) {
-  const [items, setItems] = useState<VocabItem[]>(VOCAB_INITIAL);
+export function VocabView({
+  state: _state,
+  dispatch: _dispatch,
+  loadVocab = listVocab,
+  createVocab = addVocab,
+  removeVocab = deleteVocab,
+}: VocabViewProps) {
+  const [items, setItems] = useState<VocabItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState<VocabDraft>(EMPTY_DRAFT);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const formatOpts = Object.keys(FORMAT_META);
 
-  function add() {
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setLoadError(null);
+    loadVocab()
+      .then((data) => {
+        if (!cancelled) {
+          setItems(data);
+          setLoading(false);
+        }
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          const message = err instanceof Error ? err.message : 'Failed to load vocabulary';
+          setLoadError(message);
+          setLoading(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [loadVocab]);
+
+  async function add() {
     if (!draft.phrase.trim()) return;
-    setItems((arr) => [
-      ...arr,
-      {
-        id: Date.now(),
-        phrase: draft.phrase.trim(),
-        target: { type: draft.type, value: draft.value },
-        builtin: false,
-        hits: 0,
-      },
-    ]);
-    setDraft(EMPTY_DRAFT);
-    setAdding(false);
+    setActionError(null);
+    const newItem: VocabItem = {
+      id: Date.now(),
+      phrase: draft.phrase.trim(),
+      target: { type: draft.type, value: draft.value },
+      builtin: false,
+      hits: 0,
+    };
+    try {
+      const created = await createVocab(newItem);
+      setItems((arr) => [...arr, created]);
+      setDraft(EMPTY_DRAFT);
+      setAdding(false);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to add phrase';
+      setActionError(message);
+    }
   }
-  function remove(id: number) {
-    setItems((arr) => arr.filter((i) => i.id !== id));
+
+  async function remove(id: number) {
+    setActionError(null);
+    try {
+      await removeVocab(id);
+      setItems((arr) => arr.filter((i) => i.id !== id));
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to remove phrase';
+      setActionError(message);
+    }
   }
 
   return (
@@ -91,6 +146,12 @@ export function VocabView({ state: _state, dispatch: _dispatch }: VocabViewProps
           </Btn>
         }
       />
+
+      {actionError && (
+        <div style={{ marginBottom: 12 }}>
+          <Chip tone="danger">{actionError}</Chip>
+        </div>
+      )}
 
       {adding && (
         <div
@@ -118,7 +179,7 @@ export function VocabView({ state: _state, dispatch: _dispatch }: VocabViewProps
               value={draft.phrase}
               onChange={(e) => setDraft({ ...draft, phrase: e.target.value })}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') add();
+                if (e.key === 'Enter') void add();
                 if (e.key === 'Escape') setAdding(false);
               }}
             />
@@ -156,7 +217,7 @@ export function VocabView({ state: _state, dispatch: _dispatch }: VocabViewProps
             <Btn variant="ghost" onClick={() => setAdding(false)}>
               Cancel
             </Btn>
-            <Btn variant="primary" onClick={add} kbd="↵">
+            <Btn variant="primary" onClick={() => void add()} kbd="↵">
               Add
             </Btn>
           </div>
@@ -207,6 +268,51 @@ export function VocabView({ state: _state, dispatch: _dispatch }: VocabViewProps
             </tr>
           </thead>
           <tbody>
+            {loading && (
+              <tr>
+                <td
+                  colSpan={4}
+                  style={{
+                    padding: '20px 14px',
+                    textAlign: 'center',
+                    color: 'var(--text-mute)',
+                    fontSize: 13,
+                  }}
+                >
+                  Loading…
+                </td>
+              </tr>
+            )}
+            {!loading && loadError && (
+              <tr>
+                <td
+                  colSpan={4}
+                  style={{
+                    padding: '20px 14px',
+                    textAlign: 'center',
+                    color: 'var(--danger)',
+                    fontSize: 13,
+                  }}
+                >
+                  {loadError}
+                </td>
+              </tr>
+            )}
+            {!loading && !loadError && items.length === 0 && (
+              <tr>
+                <td
+                  colSpan={4}
+                  style={{
+                    padding: '20px 14px',
+                    textAlign: 'center',
+                    color: 'var(--text-mute)',
+                    fontSize: 13,
+                  }}
+                >
+                  No trigger phrases yet. Add one above.
+                </td>
+              </tr>
+            )}
             {items.map((it) => (
               <tr key={it.id} style={{ borderBottom: '1px solid var(--border)' }}>
                 <td style={{ padding: '12px 14px' }}>
@@ -244,7 +350,7 @@ export function VocabView({ state: _state, dispatch: _dispatch }: VocabViewProps
                       size="sm"
                       variant="ghost"
                       icon={<Icon.trash size={12} />}
-                      onClick={() => remove(it.id)}
+                      onClick={() => void remove(it.id)}
                     />
                   )}
                 </td>

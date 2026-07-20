@@ -55,11 +55,11 @@ _No CLI commands yet._
 Last 5 entries from [CHANGELOG.md](./CHANGELOG.md):
 
 <!-- BEGIN:RECENT-UPDATES -->
+- Wire History, Bench, Vocab & Settings views to the live backend API
 - T10 — Capture endpoint + real wiring
 - T9 — STT engine
 - T8 — API routers
 - T7 — Polars/Parquet store + seed data
-- T6 — Backend scaffold + data contracts
 <!-- END:RECENT-UPDATES -->
 
 ## Project map

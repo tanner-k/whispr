@@ -15,10 +15,12 @@ import { DEMO_SAMPLES } from './captureData';
 export interface HistoryDetailProps {
   /** The history row to render in detail. */
   item: HistoryItem;
+  /** Called when the user clicks the trash / delete button. */
+  onDelete?: () => void;
 }
 
 /** The detail pane for a single history entry. */
-export function HistoryDetail({ item }: HistoryDetailProps) {
+export function HistoryDetail({ item, onDelete }: HistoryDetailProps) {
   // Use a matching demo sample if one exists, else fabricate.
   // T8: fragile title-string coupling — replace with an id-based backend lookup.
   const sample = DEMO_SAMPLES.find((s) => s.title === item.title) || null;
@@ -47,7 +49,7 @@ export function HistoryDetail({ item }: HistoryDetailProps) {
           <Btn size="sm" icon={<Icon.copy size={13} />} variant="ghost">
             Copy
           </Btn>
-          <Btn size="sm" icon={<Icon.trash size={13} />} variant="ghost" />
+          <Btn size="sm" icon={<Icon.trash size={13} />} variant="ghost" onClick={onDelete} />
         </span>
       </div>
       <h2
